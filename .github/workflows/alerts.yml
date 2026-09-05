@@ -1,0 +1,23 @@
+name: Telegram price digest
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 06:00 UTC = 08:00 Harare, daily
+  workflow_dispatch: {} # manual "Run workflow" button for testing
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: pip install -e .
+      - name: Send digest
+        run: python -m sokodata.alerts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SOKODATA_API_URL: https://sokodata.onrender.com

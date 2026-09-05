@@ -67,6 +67,19 @@ The repo ships a [Render Blueprint](render.yaml) — one click deploys the API:
 
 Free-tier notes: the service sleeps after ~15 min without traffic (first request after that takes ~1 min while the warehouse rebuilds), and the disk is ephemeral — the SQLite file is rebuilt from source data each boot by design.
 
+## Telegram alerts
+
+A GitHub Actions cron job posts a daily price digest (biggest movers + unusual prices) to a Telegram channel at 08:00 Harare time.
+
+Setup, once:
+
+1. In Telegram, message **@BotFather** → `/newbot` → choose a name and a `..._bot` username → save the **token** it gives you
+2. Create a **public channel** (e.g. `@soko_prices`) and add your bot as an administrator
+3. Add repository secrets ([Settings → Secrets → Actions](../../settings/secrets/actions)): `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (e.g. `@soko_prices`)
+4. Trigger a test send from the [Telegram price digest workflow](../../actions/workflows/alerts.yml) → **Run workflow**
+
+Anyone who wants alerts just joins the channel. Per-user subscriptions are on the roadmap once the project has persistent storage.
+
 ## Architecture
 
 ```
@@ -91,7 +104,7 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 
 ## Roadmap
 
-- [ ] Telegram/WhatsApp price alerts (per market & commodity subscriptions)
+- [x] Telegram/WhatsApp price alerts (daily channel digest; per-user subscriptions planned)
 - [ ] Web dashboard (mobile-first, market comparison + charts)
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
 - [ ] Seasonal baselines once WFP coverage density allows; harvest-cycle forecasting (ML)
