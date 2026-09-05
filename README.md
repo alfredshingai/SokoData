@@ -2,6 +2,8 @@
 
 **Open market-price intelligence for African food markets. Starting with Zimbabwe, built entirely on open data.**
 
+> 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
+
 [![CI](https://github.com/alfredshingai/sokodata/actions/workflows/ci.yml/badge.svg)](https://github.com/alfredshingai/sokodata/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
@@ -16,13 +18,13 @@ A trader in Bulawayo, a farmer in Masvingo, an NGO monitoring food security — 
 ## What it gives you (live examples from real data)
 
 ```console
-$ curl localhost:8000/v1/insights/movers?window_days=90
+$ curl sokodata.onrender.com/v1/insights/movers?window_days=90
 ```
 > Fish (kapenta) at **Marula**: $6.10 → $10.53/kg (**+72%**)
 > Oil (vegetable) at **Gokwe**: $1.70 → $2.74/L (**+61%**)
 
 ```console
-$ curl localhost:8000/v1/insights/anomalies
+$ curl sokodata.onrender.com/v1/insights/anomalies
 ```
 > Oil at **Tongogara Refugee Camp**: $2.22/L vs $1.51 recent norm (robust z = 47.9)
 > Maize meal at **Marula**: $0.63/kg vs $0.70 norm (z = −4.7) — cheaper than usual
