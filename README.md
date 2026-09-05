@@ -55,6 +55,16 @@ uvicorn sokodata.api.main:app --port 8000
 
 To reuse already-downloaded CSVs: `python -m sokodata.etl.run --skip-fetch` (expects them in `data/raw/`).
 
+## Deploy (free tier)
+
+The repo ships a [Render Blueprint](render.yaml) — one click deploys the API:
+
+1. Sign in at [render.com](https://render.com) with GitHub
+2. **New → Blueprint** → pick `alfredshingai/SokoData` → **Apply**
+3. Done — Render runs the ETL (rebuilds the warehouse from the live WFP feed) and starts the API on every boot
+
+Free-tier notes: the service sleeps after ~15 min without traffic (first request after that takes ~1 min while the warehouse rebuilds), and the disk is ephemeral — the SQLite file is rebuilt from source data each boot by design.
+
 ## Architecture
 
 ```
