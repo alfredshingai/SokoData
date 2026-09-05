@@ -80,6 +80,19 @@ Setup, once:
 
 Anyone who wants alerts just joins the channel. Per-user subscriptions are on the roadmap once the project has persistent storage.
 
+## WhatsApp bot
+
+Send any message to our WhatsApp number and get the live digest back (greeting first, prices after). Built on the official [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api) — free because the bot only *replies* to user-initiated messages.
+
+Setup, once:
+
+1. Create an app at [developers.facebook.com](https://developers.facebook.com) → add the **WhatsApp** product → note the **Phone number ID** and temporary **access token** (API Setup page)
+2. Add the test number as a recipient (dev mode allows 5 numbers; production needs business verification)
+3. Webhooks: callback URL `https://sokodata.onrender.com/webhooks/whatsapp`, verify token = any string you choose, subscribe to the **messages** field
+4. Set env vars on Render (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`) or as GitHub secrets
+
+The dev access token expires every 24h — refresh it on the API Setup page, or generate a permanent token via Business Settings when you verify the business.
+
 ## Architecture
 
 ```
@@ -104,7 +117,9 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 
 ## Roadmap
 
-- [x] Telegram/WhatsApp price alerts (daily channel digest; per-user subscriptions planned)
+- [x] Telegram digest (channel push, GitHub Actions cron)
+- [x] WhatsApp bot (on-demand digest replies via Cloud API)
+- [ ] WhatsApp push notifications (paid template messages) + per-user subscriptions
 - [ ] Web dashboard (mobile-first, market comparison + charts)
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
 - [ ] Seasonal baselines once WFP coverage density allows; harvest-cycle forecasting (ML)

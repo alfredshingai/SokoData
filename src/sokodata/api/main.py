@@ -15,7 +15,7 @@ from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
 from sokodata.analysis import seasonal
-from sokodata.api.routers import commodities, insights, markets, prices
+from sokodata.api.routers import commodities, insights, markets, prices, webhooks
 from sokodata.config import DATA_CREDIT, DB_PATH
 from sokodata.etl.store import connect
 
@@ -84,6 +84,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(commodities.router, prefix="/v1")
     app.include_router(prices.router, prefix="/v1")
     app.include_router(insights.router, prefix="/v1")
+    app.include_router(webhooks.router)
     return app
 
 

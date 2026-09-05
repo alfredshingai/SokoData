@@ -31,48 +31,60 @@ def fetch_json(url: str) -> dict:
         return json.load(resp)
 
 
-def _fmt_mover(m: dict) -> str:
-    return (
-        f"• <b>{html.escape(m['commodity'])}</b> at {html.escape(m['market'])}: "
-        f"${m['prev_usd']:,.2f} → ${m['last_usd']:,.2f} / {html.escape(m['unit'])} "
-        f"(<b>{m['pct_change']:+.0f}%</b>)"
-    )
+def _markup(markup: str):
+    """Renderers for the two targets: Telegram HTML and WhatsApp plain text."""
+    if markup == "html":
+        return (lambda s: f"<b>{html.escape(s)}</b>"), (lambda s: f"<i>{html.escape(s)}</i>")
+    if markup == "whatsapp":
+        return (lambda s: f"*{s}*"), (lambda s: f"_{s}_")
+    raise ValueError(f"unknown markup: {markup}")
 
 
-def _fmt_anomaly(a: dict) -> str:
-    direction = "above" if a["z"] > 0 else "below"
-    return (
-        f"• <b>{html.escape(a['commodity'])}</b> at {html.escape(a['market'])}: "
-        f"${a['usdprice']:,.2f} / {html.escape(a['unit'])} "
-        f"({direction} the ${a['recent_median_usd']:,.2f} recent norm)"
-    )
-
-
-def format_digest(movers: list[dict], anomalies: list[dict], date_iso: str | None = None) -> str:
-    """Render the channel message. HTML parse mode; escapes all data fields."""
-    lines = ["🌾 <b>SokoData — Zimbabwe food-price digest</b>"]
+def format_digest(
+    movers: list[dict], anomalies: list[dict], date_iso: str | None = None,
+    *, markup: str = "html",
+) -> str:
+    """Render the digest message. HTML mode for Telegram; WhatsApp mode uses
+    *bold* / _italic_ and no HTML entities. Escapes all data fields."""
+    bold, italic = _markup(markup)
+    esc = html.escape if markup == "html" else (lambda s: s)
+    lines = [f"{bold('🌾 SokoData — Zimbabwe food-price digest')}"]
     if date_iso:
-        lines.append(f"<i>{html.escape(date_iso)}</i>")
+        lines.append(italic(date_iso))
     lines.append("")
 
     rising = [m for m in movers if m["pct_change"] > 0][:TOP_MOVERS]
     falling = [m for m in movers if m["pct_change"] < 0][:TOP_MOVERS]
     if rising or falling:
-        lines.append("📈 <b>Biggest movers (trailing window)</b>")
-        lines += [_fmt_mover(m) for m in rising + falling]
+        lines.append(f"{bold('📈 Biggest movers (trailing window)')}")
+        for m in rising + falling:
+            lines.append(
+                f"• {bold(esc(m['commodity']))} at {esc(m['market'])}: "
+                f"${m['prev_usd']:,.2f} → ${m['last_usd']:,.2f} / {esc(m['unit'])} "
+                f"({bold(f'{m['pct_change']:+.0f}%')})"
+            )
         lines.append("")
 
     if anomalies:
-        lines.append("🚨 <b>Unusual prices (vs 24-month norm)</b>")
-        lines += [_fmt_anomaly(a) for a in anomalies[:TOP_ANOMALIES]]
+        lines.append(f"{bold('🚨 Unusual prices (vs 24-month norm)')}")
+        for a in anomalies[:TOP_ANOMALIES]:
+            direction = "above" if a["z"] > 0 else "below"
+            lines.append(
+                f"• {bold(esc(a['commodity']))} at {esc(a['market'])}: "
+                f"${a['usdprice']:,.2f} / {esc(a['unit'])} "
+                f"({direction} the ${a['recent_median_usd']:,.2f} recent norm)"
+            )
         lines.append("")
 
     if not rising and not falling and not anomalies:
         lines.append("No notable price movements in this window.")
 
-    lines.append(
-        f'Data: WFP via HDX · <a href="{html.escape(API_BASE)}">sokodata.onrender.com</a>'
-    )
+    if markup == "html":
+        lines.append(
+            f'Data: WFP via HDX · <a href="{html.escape(API_BASE)}">sokodata.onrender.com</a>'
+        )
+    else:
+        lines.append(f"Data: WFP via HDX · {API_BASE}")
     message = "\n".join(lines)
     if len(message) > MAX_MESSAGE:  # trim defensively; lists are already capped
         message = message[: MAX_MESSAGE - 1] + "…"
