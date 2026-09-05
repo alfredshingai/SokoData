@@ -11,6 +11,7 @@ from pathlib import Path
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
 from sokodata.analysis import seasonal
@@ -62,6 +63,11 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
         version=__version__,
         lifespan=lifespan,
     )
+
+    @app.get("/", include_in_schema=False)
+    def root():
+        """Land on the interactive docs instead of a 404."""
+        return RedirectResponse(url="/docs")
 
     @app.get("/health", response_model=None, tags=["meta"])
     def health():

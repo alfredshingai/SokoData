@@ -4,6 +4,12 @@ from sokodata.analysis.seasonal import dedupe_flag
 from sokodata.etl.clean import clean_prices
 
 
+def test_root_redirects_to_docs(client):
+    r = client.get("/", follow_redirects=False)
+    assert r.status_code in (302, 307)
+    assert r.headers["location"].endswith("/docs")
+
+
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
