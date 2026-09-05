@@ -1,0 +1,25 @@
+# Data (fetched at build time; see ETL docs)
+data/
+*.db
+*.sqlite*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling
+.ruff_cache/
+.pytest_cache/
+.coverage
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
