@@ -97,4 +97,4 @@ CI runs lint + tests on Python 3.12/3.13/3.14. Pull requests welcome — pick an
 
 ---
 
-Built by [Alfred Shingai](https://github.com/alfredshingai) with AI pair-programming (ZCode). Not affiliated with WFP or HDX.
+Built by [Alfred Shingai](https://github.com/alfredshingai). Not affiliated with WFP or HDX.
