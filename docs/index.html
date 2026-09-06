@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SokoData — live food-market prices for Zimbabwe. Open data from the World Food Programme, served by an open-source API.">
+  <title>SokoData — Zimbabwe food-market prices</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./">🌾 SokoData</a>
+      <p class="tagline">Zimbabwe food-market prices, live &amp; open</p>
+      <a class="header-link" href="https://sokodata.onrender.com/docs" target="_blank" rel="noopener">API ↗</a>
+    </div>
+  </header>
+
+  <nav class="tabs wrap" aria-label="Sections">
+    <button class="tab is-active" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="tab" data-tab="explorer" aria-selected="false">Price explorer</button>
+    <button class="tab" data-tab="about" aria-selected="false">About</button>
+  </nav>
+
+  <main class="wrap">
+    <p id="coldstart-note" class="coldstart" hidden>
+      ⏳ The free-tier API wakes up on first use — this can take up to a minute.
+    </p>
+
+    <!-- ============ OVERVIEW ============ -->
+    <section id="tab-overview" class="panel is-active">
+      <div id="stats" class="stats-grid" aria-label="Dataset coverage">
+        <div class="stat-card"><span class="stat-value" id="stat-markets">—</span><span class="stat-label">Markets</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-commodities">—</span><span class="stat-label">Commodities</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-observations">—</span><span class="stat-label">Observations</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-lastdate">—</span><span class="stat-label">Data as of</span></div>
+      </div>
+
+      <div class="two-col">
+        <section class="card" aria-labelledby="movers-h">
+          <h2 id="movers-h">📈 Biggest movers</h2>
+          <p class="muted">Largest USD price changes across markets (trailing 90 days).</p>
+          <ul id="movers-list" class="insight-list"><li class="muted">Loading…</li></ul>
+        </section>
+        <section class="card" aria-labelledby="anomalies-h">
+          <h2 id="anomalies-h">🚨 Unusual prices</h2>
+          <p class="muted">Latest readings far from each market's own 24-month norm.</p>
+          <ul id="anomalies-list" class="insight-list"><li class="muted">Loading…</li></ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============ EXPLORER ============ -->
+    <section id="tab-explorer" class="panel" hidden>
+      <div class="card">
+        <h2>Compare markets</h2>
+        <div class="controls">
+          <div class="control">
+            <label for="commodity-select">Commodity</label>
+            <select id="commodity-select"><option>Loading…</option></select>
+          </div>
+          <div class="control">
+            <label for="market-select">Market</label>
+            <select id="market-select"><option>Loading…</option></select>
+          </div>
+        </div>
+
+        <h3 id="chart-title">Price history</h3>
+        <div class="chart-box"><canvas id="price-chart" role="img" aria-label="Price history chart"></canvas></div>
+        <p class="muted" id="chart-caption"></p>
+      </div>
+
+      <div class="card">
+        <h2 id="table-title">Latest prices across markets</h2>
+        <p class="muted">Cheapest first. Prices in USD per unit as reported by WFP.</p>
+        <div class="table-scroll">
+          <table id="latest-table">
+            <thead>
+              <tr><th>#</th><th>Market</th><th>Province</th><th>Price (USD)</th><th>Local price</th><th>As of</th></tr>
+            </thead>
+            <tbody><tr><td colspan="6" class="muted">Pick a commodity above.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="tab-about" class="panel" hidden>
+      <div class="card">
+        <h2>About SokoData</h2>
+        <p>
+          SokoData answers a simple question — <em>what does food cost at my market,
+          and is that normal?</em> — for Zimbabwe's food markets, using open data from the
+          <a href="https://data.humdata.org/dataset/wfp-food-prices-for-zimbabwe" target="_blank" rel="noopener">World Food Programme Price Database</a>
+          (via HDX, licensed CC BY-IGO).
+        </p>
+        <p>
+          The pipeline refreshes from the live WFP feed on every boot, cleans and
+          currency-normalizes the data (Zimbabwe's 2024 currency reform broke naive
+          comparisons — see how we handle that in the
+          <a href="data_dictionary.md">data dictionary</a>), and serves it through an
+          open-source API that anyone can build on.
+        </p>
+        <p>
+          <a href="https://github.com/alfredshingai/SokoData" target="_blank" rel="noopener">
+            Source code on GitHub</a> — pull requests welcome. Built by
+          <a href="https://github.com/alfredshingai" target="_blank" rel="noopener">Alfred Shingai</a>.
+          Not affiliated with WFP or HDX.
+        </p>
+      </div>
+    </section>
+
+    <div id="error-box" class="error-box" hidden>
+      <p>Couldn't reach the API.</p>
+      <button id="retry-btn" class="btn">Retry</button>
+    </div>
+  </main>
+
+  <footer class="site-footer wrap">
+    <p>Data © WFP via HDX (CC BY-IGO) · Code MIT · <a href="https://github.com/alfredshingai/SokoData">GitHub</a></p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

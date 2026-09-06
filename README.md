@@ -3,6 +3,7 @@
 **Open market-price intelligence for African food markets. Starting with Zimbabwe, built entirely on open data.**
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
+> 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
 
 [![CI](https://github.com/alfredshingai/sokodata/actions/workflows/ci.yml/badge.svg)](https://github.com/alfredshingai/sokodata/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -80,6 +81,12 @@ Setup, once:
 
 Anyone who wants alerts just joins the channel. Per-user subscriptions are on the roadmap once the project has persistent storage.
 
+## Web dashboard
+
+A zero-dependency, mobile-first dashboard lives in [`docs/`](docs/index.html) (vanilla HTML/CSS/JS + Chart.js from CDN, no build step). It ships with the repo and is served by GitHub Pages — data comes straight from the public API, which allows cross-origin browser requests (CORS `GET`).
+
+Run it locally against your local API: `cd docs && python -m http.server 8899` → http://127.0.0.1:8899
+
 ## WhatsApp bot
 
 Send any message to our WhatsApp number and get the live digest back (greeting first, prices after). Built on the official [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api) — free because the bot only *replies* to user-initiated messages.
@@ -120,7 +127,7 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [x] Telegram digest (channel push, GitHub Actions cron)
 - [x] WhatsApp bot (on-demand digest replies via Cloud API)
 - [ ] WhatsApp push notifications (paid template messages) + per-user subscriptions
-- [ ] Web dashboard (mobile-first, market comparison + charts)
+- [x] Web dashboard (mobile-first, market comparison + charts, GitHub Pages)
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
 - [ ] Seasonal baselines once WFP coverage density allows; harvest-cycle forecasting (ML)
 - [ ] Digital Public Goods (DPG) submission

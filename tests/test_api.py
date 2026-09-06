@@ -4,6 +4,11 @@ from sokodata.analysis.seasonal import dedupe_flag
 from sokodata.etl.clean import clean_prices
 
 
+def test_cors_allows_browser_origins(client):
+    r = client.get("/v1/markets", headers={"Origin": "https://alfredshingai.github.io"})
+    assert r.headers["access-control-allow-origin"] == "*"
+
+
 def test_root_redirects_to_docs(client):
     r = client.get("/", follow_redirects=False)
     assert r.status_code in (302, 307)

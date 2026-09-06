@@ -28,6 +28,7 @@ class PricePoint(BaseModel):
     date: Date
     market_id: int
     market: str
+    admin1: str | None = None
     commodity_id: int
     commodity: str
     unit: str

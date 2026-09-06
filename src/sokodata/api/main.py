@@ -11,6 +11,7 @@ from pathlib import Path
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
@@ -62,6 +63,15 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
         ),
         version=__version__,
         lifespan=lifespan,
+    )
+
+    # Read-only public API: allow browser apps (dashboard, third parties) to
+    # call it directly from any origin.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET"],
+        allow_headers=["*"],
     )
 
     @app.get("/", include_in_schema=False)

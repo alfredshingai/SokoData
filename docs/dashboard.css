@@ -1,0 +1,125 @@
+/* SokoData dashboard — mobile-first, no framework */
+:root {
+  --green: #1c7c43;
+  --green-dark: #145c31;
+  --red: #b3362b;
+  --ink: #1d2a21;
+  --muted: #64716a;
+  --bg: #f6f8f6;
+  --card: #ffffff;
+  --line: #e3e9e4;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+
+/* Header */
+.site-header { background: var(--green); color: #fff; padding: 14px 0; }
+.header-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.brand { color: #fff; font-weight: 700; font-size: 1.3rem; text-decoration: none; }
+.tagline { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+.header-link { margin-left: auto; color: #fff; font-size: 0.9rem; }
+
+/* Tabs */
+.tabs { display: flex; gap: 6px; padding-top: 14px; }
+.tab {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.tab.is-active { background: var(--green); border-color: var(--green); color: #fff; font-weight: 600; }
+
+/* Panels & cards */
+.panel { padding: 18px 0 32px; }
+.panel.is-active { display: block; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.card h2 { margin: 0 0 4px; font-size: 1.15rem; }
+.card h3 { margin: 18px 0 6px; font-size: 1rem; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px;
+  display: flex; flex-direction: column;
+}
+.stat-value { font-size: 1.35rem; font-weight: 700; color: var(--green-dark); }
+.stat-label { font-size: 0.82rem; color: var(--muted); }
+
+.two-col { display: grid; gap: 16px; }
+@media (min-width: 760px) {
+  .two-col { grid-template-columns: 1fr 1fr; }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Insight lists */
+.insight-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.insight-list li { padding: 8px 0; border-top: 1px solid var(--line); font-size: 0.95rem; }
+.insight-list li:first-child { border-top: 0; }
+.badge {
+  display: inline-block; min-width: 64px; text-align: center;
+  padding: 1px 8px; border-radius: 999px;
+  font-size: 0.82rem; font-weight: 600; color: #fff;
+}
+.badge.up { background: var(--red); }
+.badge.down { background: var(--green); }
+
+/* Controls */
+.controls { display: grid; gap: 10px; margin: 12px 0; }
+@media (min-width: 600px) { .controls { grid-template-columns: 1fr 1fr; } }
+.control { display: flex; flex-direction: column; gap: 4px; }
+.control label { font-size: 0.85rem; color: var(--muted); }
+.control select {
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; font-size: 0.95rem; color: var(--ink);
+}
+
+/* Chart */
+.chart-box { position: relative; height: 300px; }
+@media (min-width: 600px) { .chart-box { height: 340px; } }
+
+/* Table */
+.table-scroll { overflow-x: auto; margin-top: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; }
+tr.cheapest td:nth-child(4) { color: var(--green-dark); font-weight: 700; }
+tr.priciest td:nth-child(4) { color: var(--red); font-weight: 700; }
+
+/* States */
+.coldstart, .error-box {
+  background: #fff8e6; border: 1px solid #eedc9a; color: #6b5b1e;
+  border-radius: var(--radius); padding: 10px 14px; margin: 14px 0; font-size: 0.92rem;
+}
+.error-box { background: #fdeeee; border-color: #eec4c0; color: #7c2d24; }
+.error-box[hidden], .coldstart[hidden] { display: none; }
+.btn {
+  background: var(--green); color: #fff; border: 0; border-radius: 8px;
+  padding: 7px 18px; font-size: 0.9rem; cursor: pointer;
+}
+
+/* Footer */
+.site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; padding: 18px 16px 28px; }
+.site-footer a { color: var(--green-dark); }
+a { color: var(--green-dark); }

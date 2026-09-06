@@ -9,8 +9,8 @@ from sokodata.api.schemas import PricePoint
 router = APIRouter(tags=["prices"])
 
 SELECT_PRICE = """
-    SELECT p.date, p.market_id, m.market, p.commodity_id, p.commodity, p.unit,
-           p.priceflag, p.pricetype, p.currency, p.price, p.usdprice
+    SELECT p.date, p.market_id, m.market, m.admin1, p.commodity_id, p.commodity,
+           p.unit, p.priceflag, p.pricetype, p.currency, p.price, p.usdprice
     FROM prices p JOIN markets m ON m.market_id = p.market_id
 """
 
