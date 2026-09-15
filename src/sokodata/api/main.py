@@ -1,4 +1,4 @@
-"""SokoData HTTP API (FastAPI).
+"""SokoData HTTP API (FastAPI) - Open Data Commons for Zimbabwe.
 
 Run locally:
     uvicorn sokodata.api.main:app --reload
@@ -15,19 +15,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
-from sokodata.analysis import seasonal
-from sokodata.api.routers import commodities, insights, markets, prices, webhooks
+from sokodata.api.routers import catalog, climate, commodities, economy, insights, markets, prices, webhooks
 from sokodata.config import DATA_CREDIT, DB_PATH
-from sokodata.etl.store import connect
+from sokodata.datasets.markets.store import connect
 
 log = logging.getLogger(__name__)
 
 
 def load_prices_frame(conn) -> pd.DataFrame:
-    """Load the full prices table into pandas for in-memory analytics.
-
-    At Zimbabwe scale this is ~27k rows; re-run the ETL to refresh.
-    """
+    """Load the full prices table into pandas for in-memory analytics."""
     query = """
         SELECT p.date, p.market_id, m.market, p.commodity_id, p.commodity,
                p.category, p.unit, p.priceflag, p.pricetype, p.currency,
@@ -35,8 +31,11 @@ def load_prices_frame(conn) -> pd.DataFrame:
         FROM prices p JOIN markets m ON m.market_id = p.market_id
         ORDER BY p.date
     """
-    df = pd.read_sql(query, conn, parse_dates=["date"])
-    return df
+    try:
+        df = pd.read_sql(query, conn, parse_dates=["date"])
+        return df
+    except Exception:
+        return pd.DataFrame()
 
 
 def create_app(db_path: Path | str | None = None) -> FastAPI:
@@ -56,17 +55,16 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
         app.state.conn.close()
 
     app = FastAPI(
-        title="SokoData API",
+        title="SokoData API - Open Data Commons for Zimbabwe",
         description=(
-            "Open market-price intelligence for African food markets. "
-            "Data: World Food Programme Price Database via HDX (CC BY-IGO)."
+            "Open data commons for Zimbabwe: market prices, economy, climate and more. "
+            "See /v1/catalog for all datasets. "
+            "Market prices: World Food Programme Price Database via HDX (CC BY-IGO)."
         ),
         version=__version__,
         lifespan=lifespan,
     )
 
-    # Read-only public API: allow browser apps (dashboard, third parties) to
-    # call it directly from any origin.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -76,24 +74,28 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
 
     @app.get("/", include_in_schema=False)
     def root():
-        """Land on the interactive docs instead of a 404."""
         return RedirectResponse(url="/docs")
 
     @app.get("/health", response_model=None, tags=["meta"])
     def health():
         from sokodata.api.schemas import Health
+        from sokodata.datasets.markets.analysis.seasonal import coverage
 
+        cov = coverage(app.state.prices) if app.state.prices is not None and not app.state.prices.empty else {"observations": 0, "markets": 0, "commodities": 0, "first_date": None, "last_date": None}
         return Health(
             status="ok" if app.state.prices is not None else "empty",
             version=__version__,
-            coverage=seasonal.coverage(app.state.prices),
+            coverage=cov,
             data_credit=DATA_CREDIT,
         )
 
+    app.include_router(catalog.router, prefix="/v1")
     app.include_router(markets.router, prefix="/v1")
     app.include_router(commodities.router, prefix="/v1")
     app.include_router(prices.router, prefix="/v1")
     app.include_router(insights.router, prefix="/v1")
+    app.include_router(economy.router, prefix="/v1")
+    app.include_router(climate.router, prefix="/v1")
     app.include_router(webhooks.router)
     return app
 
