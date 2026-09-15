@@ -21,13 +21,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData commons ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
-    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy"], default=None, help="run only these datasets (repeatable)")
+    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining"], default=None, help="run only these datasets (repeatable)")
     parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     args = parser.parse_args()
 
-    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy"}
+    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining"}
 
     if "markets" in only:
         from sokodata.datasets.markets.etl import run_etl as run_markets
@@ -82,6 +82,27 @@ def main() -> None:
             run_energy(args.data_dir, args.db)
         except Exception as e:
             log.warning("energy ETL failed (commons continues): %s", e)
+    if "water" in only:
+        try:
+            from sokodata.datasets.water.etl import run_etl as run_water
+
+            run_water(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("water ETL failed (commons continues): %s", e)
+    if "transport" in only:
+        try:
+            from sokodata.datasets.transport.etl import run_etl as run_transport
+
+            run_transport(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("transport ETL failed (commons continues): %s", e)
+    if "mining" in only:
+        try:
+            from sokodata.datasets.mining.etl import run_etl as run_mining
+
+            run_mining(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("mining ETL failed (commons continues): %s", e)
 
     log.info("commons ETL done: %s", only)
 

@@ -1,6 +1,6 @@
 # SokoData 🌾
 
-**Open Data Commons for Zimbabwe. Markets, economy, climate, demographics, agriculture and health — one API, built entirely on open data.**
+**Open Data Commons for Zimbabwe. Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport and mining — one API, built entirely on open data.**
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
 > 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
@@ -38,18 +38,27 @@ $ curl "sokodata.onrender.com/v1/climate/daily?admin1=Harare"
 $ curl "sokodata.onrender.com/v1/climate/monthly?admin1=Masvingo"
 ```
 
-**Demographics & Agriculture & Health (WDI + FAO + scraping):**
+**Demographics, Agriculture, Health + Education, Energy (WDI + FAO + scraping):**
 ```console
 $ curl sokodata.onrender.com/v1/demographics/annual
 $ curl sokodata.onrender.com/v1/agriculture/annual
 $ curl sokodata.onrender.com/v1/health-stats/annual
+$ curl sokodata.onrender.com/v1/education/annual
+$ curl sokodata.onrender.com/v1/energy/annual
+```
+
+**Water, Transport, Mining (WDI + ZINWA / MoT / Chamber scrape):**
+```console
+$ curl sokodata.onrender.com/v1/water/annual
+$ curl sokodata.onrender.com/v1/transport/annual
+$ curl sokodata.onrender.com/v1/mining/annual
 ```
 
 **Catalog - discover every dataset:**
 ```console
 $ curl sokodata.onrender.com/v1/catalog
 ```
-> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + ZIMSTAT), `agriculture` (WDI + FAO), `health` (WDI + MoHCC)
+> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + ZIMSTAT), `agriculture` (WDI + FAO), `health` (WDI + MoHCC), `education` (WDI + MoPSE), `energy` (WDI + ZESA), `water` (WDI + ZINWA), `transport` (WDI + MoT), `mining` (WDI + Chamber/RBZ)
 
 ### API
 
@@ -72,6 +81,11 @@ $ curl sokodata.onrender.com/v1/catalog
 | `GET /v1/agriculture/annual` | Cereal yield, agri GDP, food indices (WDI) |
 | `GET /v1/agriculture/fao/maize` | Maize tonnes (FAO FAOSTAT) |
 | `GET /v1/health-stats/annual` | Infant/under-5 mortality, immunization (WDI) |
+| `GET /v1/education/annual` | Enrollment, literacy, completion (WDI) |
+| `GET /v1/energy/annual` | Electricity access, use, renewables (WDI) |
+| `GET /v1/water/annual` | Safe/basic water + sanitation (WDI) |
+| `GET /v1/transport/annual` | Air, rail, road, internet use (WDI) |
+| `GET /v1/mining/annual` | Mineral rents, ore/metal exports (WDI) |
 | `GET /health` | Dataset coverage + data provenance |
 
 Interactive OpenAPI docs ship at `/docs` when the server runs.
@@ -81,7 +95,7 @@ Interactive OpenAPI docs ship at `/docs` when the server runs.
 ```bash
 pip install -e ".[dev]"          # add [pdf] for ZIMSTAT/ZERA PDF extraction: pip install -e ".[dev,pdf]"
 
-# build the commons (markets + economy + climate + demographics + agriculture + health)
+# build the commons (all 11 datasets)
 python -m sokodata.etl_run
 
 # or run one dataset at a time:
@@ -91,6 +105,11 @@ python -m sokodata.datasets.climate.etl --admin1 Harare --start 2024-01-01
 python -m sokodata.datasets.demographics.etl
 python -m sokodata.datasets.agriculture.etl
 python -m sokodata.datasets.health.etl
+python -m sokodata.datasets.education.etl
+python -m sokodata.datasets.energy.etl
+python -m sokodata.datasets.water.etl
+python -m sokodata.datasets.transport.etl
+python -m sokodata.datasets.mining.etl
 
 # legacy shim still works:
 python -m sokodata.etl.run --skip-fetch
@@ -161,9 +180,10 @@ The dev access token expires every 24h — refresh it on the API Setup page, or 
    HDX WFP (CSV)                    ├─ /v1/markets, /v1/commodities, /v1/prices
   datasets/economy ─┤                   ├─ /v1/economy/*, /v1/climate/*
   datasets/climate ─┤── SQLite ─────────┤  /v1/demographics/*, /v1/agriculture/*
-  datasets/demographics ─┤              ├─ /v1/health-stats/*
-  datasets/agriculture ──┤              └─ /v1/insights/*, /health
-  datasets/health ─┘                   core/fetch: open_api | html_scrape | pdf_extract
+  datasets/demographics ─┤              ├─ /v1/health-stats/*, /v1/education/*
+  datasets/agriculture/health/edu/energy ┤  /v1/energy/*, /v1/water/*, /v1/transport/*
+  datasets/water/transport/mining ─┘    └─ /v1/mining/*, /v1/insights/*, /health
+                                        core/fetch: open_api | html_scrape | pdf_extract
 ```
 ```
 
@@ -185,12 +205,17 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [x] Demographics (WDI + ZIMSTAT 2022 Census) + `/v1/demographics/*`
 - [x] Agriculture (WDI + FAO FAOSTAT + Agritex scrape) + `/v1/agriculture/*`
 - [x] Health (WDI + MoHCC scrape) + `/v1/health-stats/*`
-- [x] Unified catalog `GET /v1/catalog` + unified ETL `python -m sokodata.etl_run`
+- [x] Education (WDI + MoPSE scrape) + `/v1/education/*`
+- [x] Energy (WDI + ZESA/ZERA scrape) + `/v1/energy/*`
+- [x] Water (WDI + ZINWA scrape) + `/v1/water/*`
+- [x] Transport (WDI + MoT scrape) + `/v1/transport/*`
+- [x] Mining (WDI + Chamber/RBZ scrape) + `/v1/mining/*`
+- [x] Unified catalog `GET /v1/catalog` (11 datasets) + unified ETL `python -m sokodata.etl_run`
 - [x] Telegram digest (channel push, GitHub Actions cron)
 - [x] WhatsApp bot (on-demand digest replies via Cloud API)
 - [ ] WhatsApp push notifications (paid template messages) + per-user subscriptions
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
-- [ ] Education + Energy + Water as next commons pillars
+- [ ] Governance + Geospatial boundaries as next commons pillars
 - [ ] Seasonal baselines + harvest-cycle forecasting (ML) linking markets ↔ climate ↔ economy ↔ agriculture
 - [ ] Digital Public Goods (DPG) submission as a commons
 
