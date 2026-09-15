@@ -1,6 +1,6 @@
 # SokoData 🌾
 
-**Open Data Commons for Zimbabwe. Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade and labour — one API, built entirely on open data.**
+**Open Data Commons for Zimbabwe. Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty and ICT — one API, built entirely on open data.**
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
 > 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
@@ -61,11 +61,18 @@ $ curl sokodata.onrender.com/v1/trade/annual
 $ curl sokodata.onrender.com/v1/labour/annual
 ```
 
+**Environment, Poverty, ICT (WDI + EMA / ZIMSTAT / POTRAZ scrape):**
+```console
+$ curl sokodata.onrender.com/v1/environment/annual
+$ curl sokodata.onrender.com/v1/poverty/annual
+$ curl sokodata.onrender.com/v1/ict/annual
+```
+
 **Catalog - discover every dataset:**
 ```console
 $ curl sokodata.onrender.com/v1/catalog
 ```
-> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + ZIMSTAT), `agriculture` (WDI + FAO), `health` (WDI + MoHCC), `education` (WDI + MoPSE), `energy` (WDI + ZESA), `water` (WDI + ZINWA), `transport` (WDI + MoT), `mining` (WDI + Chamber/RBZ), `governance` (WDI CPIA + ZEC), `trade` (WDI + ZimTrade), `labour` (WDI + LFCLS)
+> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + ZIMSTAT), `agriculture` (WDI + FAO), `health` (WDI + MoHCC), `education` (WDI + MoPSE), `energy` (WDI + ZESA), `water` (WDI + ZINWA), `transport` (WDI + MoT), `mining` (WDI + Chamber/RBZ), `governance` (WDI CPIA + ZEC), `trade` (WDI + ZimTrade), `labour` (WDI + LFCLS), `environment` (WDI + EMA), `poverty` (WDI + PICES), `ict` (WDI + POTRAZ)
 
 ### API
 
@@ -96,6 +103,9 @@ $ curl sokodata.onrender.com/v1/catalog
 | `GET /v1/governance/annual` | Property rights, transparency, parliament (WDI) |
 | `GET /v1/trade/annual` | Exports/imports, merchandise values (WDI) |
 | `GET /v1/labour/annual` | Unemployment, participation, vulnerable work (WDI) |
+| `GET /v1/environment/annual` | CO2, forest cover, PM2.5 (WDI) |
+| `GET /v1/poverty/annual` | Extreme poverty, Gini, national poverty (WDI) |
+| `GET /v1/ict/annual` | Internet, mobile, broadband per 100 (WDI) |
 | `GET /health` | Dataset coverage + data provenance |
 
 Interactive OpenAPI docs ship at `/docs` when the server runs.
@@ -105,7 +115,7 @@ Interactive OpenAPI docs ship at `/docs` when the server runs.
 ```bash
 pip install -e ".[dev]"          # add [pdf] for ZIMSTAT/ZERA PDF extraction: pip install -e ".[dev,pdf]"
 
-# build the commons (all 14 datasets)
+# build the commons (all 17 datasets)
 python -m sokodata.etl_run
 
 # or run one dataset at a time:
@@ -123,6 +133,9 @@ python -m sokodata.datasets.mining.etl
 python -m sokodata.datasets.governance.etl
 python -m sokodata.datasets.trade.etl
 python -m sokodata.datasets.labour.etl
+python -m sokodata.datasets.environment.etl
+python -m sokodata.datasets.poverty.etl
+python -m sokodata.datasets.ict.etl
 
 # legacy shim still works:
 python -m sokodata.etl.run --skip-fetch
@@ -227,7 +240,10 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [x] Governance (WDI CPIA + ZEC/Afrobarometer scrape) + `/v1/governance/*`
 - [x] Trade (WDI + ZimTrade/ZIMSTAT scrape) + `/v1/trade/*`
 - [x] Labour (WDI + ILO/LFCLS scrape) + `/v1/labour/*`
-- [x] Unified catalog `GET /v1/catalog` (14 datasets) + unified ETL `python -m sokodata.etl_run`
+- [x] Environment (WDI + EMA scrape) + `/v1/environment/*`
+- [x] Poverty (WDI + PICES scrape) + `/v1/poverty/*`
+- [x] ICT (WDI + POTRAZ scrape) + `/v1/ict/*`
+- [x] Unified catalog `GET /v1/catalog` (17 datasets) + unified ETL `python -m sokodata.etl_run`
 - [x] Telegram digest (channel push, GitHub Actions cron)
 - [x] WhatsApp bot (on-demand digest replies via Cloud API)
 - [ ] WhatsApp push notifications (paid template messages) + per-user subscriptions
