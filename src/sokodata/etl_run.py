@@ -21,13 +21,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData commons ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
-    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate"], default=None, help="run only these datasets (repeatable)")
+    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics"], default=None, help="run only these datasets (repeatable)")
     parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     args = parser.parse_args()
 
-    only = set(args.only) if args.only else {"markets", "economy", "climate"}
+    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics"}
 
     if "markets" in only:
         from sokodata.datasets.markets.etl import run_etl as run_markets
@@ -47,6 +47,13 @@ def main() -> None:
             run_climate(args.data_dir, args.db, admin1_list=args.climate_admin1, start_date=args.climate_start)
         except Exception as e:
             log.warning("climate ETL failed (commons continues): %s", e)
+    if "demographics" in only:
+        try:
+            from sokodata.datasets.demographics.etl import run_etl as run_demo
+
+            run_demo(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("demographics ETL failed (commons continues): %s", e)
 
     log.info("commons ETL done: %s", only)
 

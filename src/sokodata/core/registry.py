@@ -93,6 +93,30 @@ DATASETS: dict[str, DatasetMeta] = {
         status="active",
         tags=["climate", "weather", "rainfall", "agriculture"],
     ),
+    "demographics": DatasetMeta(
+        id="demographics",
+        label="Demographics & Population",
+        description="Population, growth and 2022 Census by province. World Bank WDI + ZIMSTAT census PDF/HTML scraping.",
+        sources=[
+            {
+                "name": "World Bank WDI Population",
+                "url": "https://data.worldbank.org/indicator/SP.POP.TOTL",
+                "license": "CC BY-4.0",
+            },
+            {
+                "name": "ZIMSTAT Census 2022",
+                "url": "https://www.zimstat.co.zw/",
+                "license": "public",
+            },
+        ],
+        tables=["demo_annual", "demo_census"],
+        update_frequency="annual/static",
+        coverage="1960-present annual, 2022 census by province",
+        fetch_strategy="mixed",
+        etl_module="sokodata.datasets.demographics.etl",
+        status="active",
+        tags=["demographics", "population", "census"],
+    ),
 }
 
 
