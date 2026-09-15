@@ -99,6 +99,15 @@ body {
 .chart-box { position: relative; height: 300px; }
 @media (min-width: 600px) { .chart-box { height: 340px; } }
 
+/* Catalog */
+.catalog-grid { display: grid; gap: 12px; margin-top: 12px; }
+@media (min-width: 760px) { .catalog-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1000px) { .catalog-grid:not(.catalog-mini) { grid-template-columns: 1fr 1fr 1fr; } }
+.catalog-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: #fbfcfb; }
+.catalog-card h3 { margin: 0 0 4px; font-size: 0.98rem; }
+.catalog-card .meta { font-size: 0.82rem; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+.catalog-card .pill { display: inline-block; font-size: 0.73rem; font-weight: 600; letter-spacing: 0.02em; padding: 1px 7px; border-radius: 999px; border: 1px solid #cfe2d6; color: var(--green-dark); background: #edf6f0; margin-right: 4px; }
+
 /* Table */
 .table-scroll { overflow-x: auto; margin-top: 10px; }
 table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }

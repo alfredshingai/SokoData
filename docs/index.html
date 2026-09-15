@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SokoData — live food-market prices for Zimbabwe. Open data from the World Food Programme, served by an open-source API.">
-  <title>SokoData — Zimbabwe food-market prices</title>
+  <meta name="description" content="SokoData — Open Data Commons for Zimbabwe. 22 datasets: markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial.">
+  <title>SokoData — Open Data Commons for Zimbabwe</title>
   <link rel="stylesheet" href="dashboard.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
 </head>
@@ -12,14 +12,15 @@
   <header class="site-header">
     <div class="wrap header-row">
       <a class="brand" href="./">🌾 SokoData</a>
-      <p class="tagline">Zimbabwe food-market prices, live &amp; open</p>
+      <p class="tagline">Open Data Commons for Zimbabwe — 22 datasets</p>
       <a class="header-link" href="https://sokodata.onrender.com/docs" target="_blank" rel="noopener">API ↗</a>
     </div>
   </header>
 
   <nav class="tabs wrap" aria-label="Sections">
     <button class="tab is-active" data-tab="overview" aria-selected="true">Overview</button>
-    <button class="tab" data-tab="explorer" aria-selected="false">Price explorer</button>
+    <button class="tab" data-tab="catalog" aria-selected="false">Catalog</button>
+    <button class="tab" data-tab="explore" aria-selected="false">Explore</button>
     <button class="tab" data-tab="about" aria-selected="false">About</button>
   </nav>
 
@@ -37,6 +38,12 @@
         <div class="stat-card"><span class="stat-value" id="stat-lastdate">—</span><span class="stat-label">Data as of</span></div>
       </div>
 
+      <div class="card" id="commons-stat">
+        <h2>Open Data Commons — <span id="catalog-count">22</span> datasets</h2>
+        <p class="muted">Markets · Economy · Climate · Demographics · Agriculture · Health · Education · Energy · Water · Transport · Mining · Governance · Trade · Labour · Environment · Poverty · ICT · Finance · Tourism · Aid · Gender · Geospatial — see <a href="#" data-go="catalog">Catalog</a> for all.</p>
+        <div id="catalog-mini" class="catalog-grid catalog-mini"></div>
+      </div>
+
       <div class="two-col">
         <section class="card" aria-labelledby="movers-h">
           <h2 id="movers-h">📈 Biggest movers</h2>
@@ -51,36 +58,59 @@
       </div>
     </section>
 
-    <!-- ============ EXPLORER ============ -->
-    <section id="tab-explorer" class="panel" hidden>
+    <!-- ============ CATALOG ============ -->
+    <section id="tab-catalog" class="panel" hidden>
       <div class="card">
-        <h2>Compare markets</h2>
+        <h2>Dataset catalog</h2>
+        <p class="muted">Every dataset in the commons: source, coverage, fetch strategy. Live from <code>/v1/catalog</code>.</p>
+        <div id="catalog-grid" class="catalog-grid"><p class="muted">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- ============ EXPLORE ============ -->
+    <section id="tab-explore" class="panel" hidden>
+      <div class="card">
         <div class="controls">
           <div class="control">
-            <label for="commodity-select">Commodity</label>
-            <select id="commodity-select"><option>Loading…</option></select>
+            <label for="dataset-select">Dataset</label>
+            <select id="dataset-select"></select>
           </div>
-          <div class="control">
-            <label for="market-select">Market</label>
-            <select id="market-select"><option>Loading…</option></select>
+          <div class="control" id="explore-subcontrol" hidden>
+            <label for="explore-endpoint">Endpoint</label>
+            <select id="explore-endpoint"></select>
+          </div>
+        </div>
+        <div class="controls" id="explore-params"></div>
+
+        <div id="explore-markets-ui" hidden>
+          <div class="controls">
+            <div class="control">
+              <label for="commodity-select">Commodity</label>
+              <select id="commodity-select"><option>Loading…</option></select>
+            </div>
+            <div class="control">
+              <label for="market-select">Market</label>
+              <select id="market-select"><option>Loading…</option></select>
+            </div>
+          </div>
+          <h3 id="chart-title">Price history</h3>
+          <div class="chart-box"><canvas id="price-chart" role="img" aria-label="Price history chart"></canvas></div>
+          <p class="muted" id="chart-caption"></p>
+          <h3 id="table-title">Latest prices across markets</h3>
+          <p class="muted">Cheapest first. Prices in USD per unit as reported by WFP.</p>
+          <div class="table-scroll">
+            <table id="latest-table">
+              <thead><tr><th>#</th><th>Market</th><th>Province</th><th>Price (USD)</th><th>Local price</th><th>As of</th></tr></thead>
+              <tbody><tr><td colspan="6" class="muted">Pick a commodity above.</td></tr></tbody>
+            </table>
           </div>
         </div>
 
-        <h3 id="chart-title">Price history</h3>
-        <div class="chart-box"><canvas id="price-chart" role="img" aria-label="Price history chart"></canvas></div>
-        <p class="muted" id="chart-caption"></p>
-      </div>
-
-      <div class="card">
-        <h2 id="table-title">Latest prices across markets</h2>
-        <p class="muted">Cheapest first. Prices in USD per unit as reported by WFP.</p>
-        <div class="table-scroll">
-          <table id="latest-table">
-            <thead>
-              <tr><th>#</th><th>Market</th><th>Province</th><th>Price (USD)</th><th>Local price</th><th>As of</th></tr>
-            </thead>
-            <tbody><tr><td colspan="6" class="muted">Pick a commodity above.</td></tr></tbody>
-          </table>
+        <div id="explore-generic" hidden>
+          <h3 id="generic-title">Data</h3>
+          <div class="chart-box" id="generic-chart-box" hidden><canvas id="generic-chart" role="img" aria-label="Chart"></canvas></div>
+          <p class="muted" id="generic-caption"></p>
+          <div class="table-scroll"><table id="generic-table"><thead></thead><tbody><tr><td class="muted">Pick a dataset.</td></tr></tbody></table></div>
         </div>
       </div>
     </section>
@@ -90,24 +120,45 @@
       <div class="card">
         <h2>About SokoData</h2>
         <p>
-          SokoData answers a simple question — <em>what does food cost at my market,
-          and is that normal?</em> — for Zimbabwe's food markets, using open data from the
-          <a href="https://data.humdata.org/dataset/wfp-food-prices-for-zimbabwe" target="_blank" rel="noopener">World Food Programme Price Database</a>
-          (via HDX, licensed CC BY-IGO).
+          <strong>SokoData</strong> is the <strong>Open Data Commons for Zimbabwe</strong> — 22 datasets,
+          one API, one catalog. It started with food-market prices and now covers every angle:
+          economy (ZiG/USD, CPI, fuel), climate (rainfall/temperature), demographics (2022 Census),
+          agriculture (yields, FAO), health, education, energy, water, transport, mining, governance,
+          trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial boundaries.
         </p>
         <p>
-          The pipeline refreshes from the live WFP feed on every boot, cleans and
-          currency-normalizes the data (Zimbabwe's 2024 currency reform broke naive
-          comparisons — see how we handle that in the
-          <a href="data_dictionary.md">data dictionary</a>), and serves it through an
-          open-source API that anyone can build on.
+          Sources are <strong>open where possible</strong> (WFP via HDX CC BY-IGO, World Bank WDI CC BY-4.0,
+          Open-Meteo CC BY-4.0, FAO) and <strong>scraped where no API exists</strong>
+          (RBZ, ZIMSTAT, ZERA, ZINWA, MoT, Chamber of Mines, ZEC, MoPSE, EMA, POTRAZ, HDX COD-AB).
+          Every dataset is documented, attributed via <code>/v1/catalog/{id}</code> and <code>/health</code>,
+          and built by the same <code>fetch → clean → store → API</code> pattern in
+          <code>src/sokodata/datasets/&lt;name&gt;/</code> registered in <code>src/sokodata/core/registry.py</code>.
         </p>
         <p>
-          <a href="https://github.com/alfredshingai/SokoData" target="_blank" rel="noopener">
-            Source code on GitHub</a> — pull requests welcome. Built by
-          <a href="https://github.com/alfredshingai" target="_blank" rel="noopener">Alfred Shingai</a>.
+          Where there's no open API, the commons scrapes HTML tables and PDFs
+          (<code>src/sokodata/core/fetch.py</code>: <code>fetch_html_tables</code>, <code>extract_pdf_tables</code>)
+          with graceful fallback — if a ministry page changes, the ETL logs a warning and serves the World Bank fallback
+          instead of failing.
+        </p>
+        <p>
+          <a href="https://github.com/alfredshingai/SokoData" target="_blank" rel="noopener">Source code on GitHub</a>
+          — pull requests welcome. Built by <a href="https://github.com/alfredshingai" target="_blank" rel="noopener">Alfred Shingai</a>.
           Not affiliated with WFP or HDX.
         </p>
+      </div>
+      <div class="card">
+        <h2>How to use</h2>
+        <ul>
+          <li><code>GET /v1/catalog</code> — list all 22 datasets, sources, licenses, freshness</li>
+          <li><code>GET /v1/prices?market_id=&amp;commodity_id=&amp;start=&amp;end=</code> — raw price series (markets)</li>
+          <li><code>GET /v1/climate/daily?admin1=Harare</code> — daily precip + temp (climate)</li>
+          <li><code>GET /v1/economy/cpi</code>, <code>/v1/demographics/annual</code>, <code>/v1/agriculture/annual</code> etc.</li>
+          <li>Interactive docs at <a href="https://sokodata.onrender.com/docs" target="_blank" rel="noopener">sokodata.onrender.com/docs</a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Data dictionary</h2>
+        <p>Cleaning rules, currency handling (2024 ZiG reform), and table schemas are documented in <a href="data_dictionary.md">data_dictionary.md</a>.</p>
       </div>
     </section>
 
@@ -118,7 +169,7 @@
   </main>
 
   <footer class="site-footer wrap">
-    <p>Data © WFP via HDX (CC BY-IGO) · Code MIT · <a href="https://github.com/alfredshingai/SokoData">GitHub</a></p>
+    <p>Data © WFP via HDX (CC BY-IGO) · World Bank WDI CC BY-4.0 · Open-Meteo CC BY-4.0 · FAO CC BY-4.0 · Code MIT · <a href="https://github.com/alfredshingai/SokoData">GitHub</a></p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
