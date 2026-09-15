@@ -1,16 +1,18 @@
 # Render Blueprint — deploys SokoData as a free web service.
 # Docs: https://render.com/docs/blueprint-spec
 #
-# The SQLite warehouse is rebuilt from the WFP feed on every start
-# (free-tier disks are ephemeral). Cold start takes ~1 minute.
+# The SQLite warehouse is rebuilt from all 22 commons datasets on every start
+# (free-tier disks are ephemeral). Cold start takes ~2-4 minutes:
+# markets (HDX ~3.5MB) + climate (Open-Meteo) + 20x World Bank WDI.
+# Scrapers (RBZ/ZIMSTAT/ZERA HTML/PDF) degrade gracefully to WDI fallback.
 services:
   - type: web
     name: sokodata
     runtime: python
     plan: free
     healthCheckPath: /health
-    buildCommand: pip install -e .
-    startCommand: sh -c "python -m sokodata.etl.run && uvicorn sokodata.api.main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: pip install -e ".[pdf]"
+    startCommand: sh -c "python -m sokodata.etl_run && uvicorn sokodata.api.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.6

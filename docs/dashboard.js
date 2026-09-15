@@ -78,24 +78,41 @@ function anomalyItem(a) {
 }
 
 async function loadOverview() {
+  // Independent fetches: one failing endpoint must not blank the whole page.
+  // (Live Render rebuilds all 22 tables on boot; during cold start some may 404.)
+  let ok = false;
   try {
-    const [health, movers, anomalies, catalog] = await Promise.all([
-      fetchJSON("/health"),
-      fetchJSON("/v1/insights/movers?window_days=90&limit=6"),
-      fetchJSON("/v1/insights/anomalies?limit=5"),
-      fetchJSON("/v1/catalog"),
-    ]);
+    const health = await fetchJSON("/health");
     renderStats(health.coverage);
+    ok = true;
+  } catch (err) { console.error("health failed", err); }
+  try {
+    const movers = await fetchJSON("/v1/insights/movers?window_days=90&limit=6");
     el("movers-list").innerHTML = movers.length ? movers.map(moverItem).join("") : '<li class="muted">No significant movements in this window.</li>';
+    ok = true;
+  } catch (err) {
+    console.error("movers failed", err);
+    el("movers-list").innerHTML = '<li class="muted">Could not load movers — retry in a minute (API may be waking up).</li>';
+  }
+  try {
+    const anomalies = await fetchJSON("/v1/insights/anomalies?limit=5");
     el("anomalies-list").innerHTML = anomalies.length ? anomalies.map(anomalyItem).join("") : '<li class="muted">Nothing unusual right now.</li>';
+    ok = true;
+  } catch (err) {
+    console.error("anomalies failed", err);
+    el("anomalies-list").innerHTML = '<li class="muted">Could not load anomalies — retry in a minute.</li>';
+  }
+  try {
+    const catalog = await fetchJSON("/v1/catalog");
     catalogCache = catalog;
     el("catalog-count").textContent = catalog.length;
     renderCatalogMini(catalog.slice(0, 6));
-    hideError();
+    ok = true;
   } catch (err) {
-    console.error(err);
-    showError();
+    console.error("catalog failed", err);
+    el("catalog-mini").innerHTML = '<p class="muted">Catalog unavailable — the API may still be waking up. Try Catalog tab.</p>';
   }
+  if (ok) hideError(); else showError();
 }
 
 function catalogCard(d) {
@@ -146,16 +163,31 @@ const DATASET_ENDPOINTS = {
   geospatial: [{ label: "Boundaries metadata", path: "/v1/geospatial/boundaries" }, { label: "Markets GeoJSON", path: "/v1/geospatial/markets/geojson" }],
 };
 
+const FALLBACK_DATASETS = [
+  { id: "markets", label: "Food Market Prices" },
+  ...Object.keys(DATASET_ENDPOINTS).map((id) => ({ id, label: id })),
+];
+
 async function initExplorer() {
-  const catalog = catalogCache || await fetchJSON("/v1/catalog");
-  catalogCache = catalog;
+  // Fallback to static list if /v1/catalog is unreachable (cold start / old API).
+  let catalog = catalogCache;
+  if (!catalog) {
+    try {
+      catalog = await fetchJSON("/v1/catalog");
+      catalogCache = catalog;
+    } catch (err) {
+      console.error("catalog for explorer failed, using fallback", err);
+      catalog = FALLBACK_DATASETS;
+    }
+  }
   const dsSel = el("dataset-select");
   const genericDatasets = catalog.filter(d => d.id !== "markets");
   dsSel.innerHTML = '<option value="markets">markets — Food Market Prices</option>' + genericDatasets.map(d => `<option value="${d.id}">${d.id} — ${d.label}</option>`).join("");
   dsSel.addEventListener("change", onDatasetChange);
   el("explore-endpoint").addEventListener("change", loadGeneric);
+  // Populate markets first so default tab has data even if generic fails.
+  try { await populateSelectors(); } catch (err) { console.error("markets explorer failed", err); }
   await onDatasetChange();
-  await populateSelectors(); // markets explorer
 }
 
 async function onDatasetChange() {
@@ -198,24 +230,28 @@ async function loadGeneric() {
   try {
     const data = await fetchJSON(url);
     const rows = Array.isArray(data) ? data : (data.features ? data.features : []);
-    renderGenericTable(rows);
+    renderGenericTable(rows, url);
     renderGenericChart(rows);
-    el("generic-caption").textContent = Array.isArray(rows) ? `${rows.length} rows from ${url}` : `${url}`;
+    if (Array.isArray(rows) && rows.length === 0) {
+      el("generic-caption").textContent = `No rows yet from ${url} — the live API rebuilds all 22 tables on boot (cold start takes minutes). Markets data loads first; try again shortly.`;
+    } else {
+      el("generic-caption").textContent = Array.isArray(rows) ? `${rows.length} rows from ${url}` : `${url}`;
+    }
     hideError();
   } catch (err) {
     console.error(err);
-    el("generic-caption").textContent = "Failed to load.";
+    el("generic-caption").textContent = "Failed to load — API may be waking up. Retry in a minute.";
     showError();
   }
 }
 
-function renderGenericTable(rows) {
+function renderGenericTable(rows, url) {
   const table = el("generic-table");
   const thead = table.querySelector("thead");
   const tbody = table.querySelector("tbody");
   if (!Array.isArray(rows) || rows.length === 0) {
     thead.innerHTML = "";
-    tbody.innerHTML = '<tr><td class="muted">No data.</td></tr>';
+    tbody.innerHTML = `<tr><td class="muted">No rows yet${url ? ` from ${url}` : ""}. The Render free tier rebuilds the warehouse on boot — markets first, then WDI datasets. Retry shortly.</td></tr>`;
     return;
   }
   // if GeoJSON features
