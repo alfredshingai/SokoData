@@ -117,6 +117,23 @@ DATASETS: dict[str, DatasetMeta] = {
         status="active",
         tags=["demographics", "population", "census"],
     ),
+    "agriculture": DatasetMeta(
+        id="agriculture",
+        label="Agriculture & Food Production",
+        description="Cereal yields, food/crop production indices and FAO maize. World Bank WDI + FAO FAOSTAT + Agritex scrape.",
+        sources=[
+            {"name": "World Bank WDI Agriculture", "url": "https://data.worldbank.org/indicator/AG.YLD.CREL.KG", "license": "CC BY-4.0"},
+            {"name": "FAO FAOSTAT QCL", "url": "https://www.fao.org/faostat/en/#data/QCL", "license": "CC BY-4.0"},
+            {"name": "Agritex / ZIMSTAT", "url": "https://www.zimstat.co.zw/", "license": "public"},
+        ],
+        tables=["agri_annual", "agri_fao_maize"],
+        update_frequency="annual",
+        coverage="1961-present annual yields and production",
+        fetch_strategy="mixed",
+        etl_module="sokodata.datasets.agriculture.etl",
+        status="active",
+        tags=["agriculture", "food-security", "yields"],
+    ),
 }
 
 
