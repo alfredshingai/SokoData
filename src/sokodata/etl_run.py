@@ -21,13 +21,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData commons ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
-    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture"], default=None, help="run only these datasets (repeatable)")
+    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health"], default=None, help="run only these datasets (repeatable)")
     parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     args = parser.parse_args()
 
-    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture"}
+    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health"}
 
     if "markets" in only:
         from sokodata.datasets.markets.etl import run_etl as run_markets
@@ -61,6 +61,13 @@ def main() -> None:
             run_agri(args.data_dir, args.db)
         except Exception as e:
             log.warning("agriculture ETL failed (commons continues): %s", e)
+    if "health" in only:
+        try:
+            from sokodata.datasets.health.etl import run_etl as run_health
+
+            run_health(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("health ETL failed (commons continues): %s", e)
 
     log.info("commons ETL done: %s", only)
 

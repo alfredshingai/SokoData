@@ -134,6 +134,22 @@ DATASETS: dict[str, DatasetMeta] = {
         status="active",
         tags=["agriculture", "food-security", "yields"],
     ),
+    "health": DatasetMeta(
+        id="health",
+        label="Health",
+        description="Infant/under-5 mortality, immunization, health expenditure. World Bank WDI + MoHCC bulletin scrape.",
+        sources=[
+            {"name": "World Bank WDI Health", "url": "https://data.worldbank.org/indicator/SP.DYN.IMRT.IN", "license": "CC BY-4.0"},
+            {"name": "MoHCC Zimbabwe", "url": "https://www.mohcc.gov.zw/", "license": "public"},
+        ],
+        tables=["health_annual"],
+        update_frequency="annual",
+        coverage="1960-present annual health indicators",
+        fetch_strategy="mixed",
+        etl_module="sokodata.datasets.health.etl",
+        status="active",
+        tags=["health", "mortality", "immunization"],
+    ),
 }
 
 
