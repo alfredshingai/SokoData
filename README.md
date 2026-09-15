@@ -1,6 +1,6 @@
 # SokoData 🌾
 
-**Open Data Commons for Zimbabwe. Market prices, economy and climate — one API, built entirely on open data.**
+**Open Data Commons for Zimbabwe. Markets, economy, climate, demographics, agriculture and health — one API, built entirely on open data.**
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
 > 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
@@ -38,11 +38,18 @@ $ curl "sokodata.onrender.com/v1/climate/daily?admin1=Harare"
 $ curl "sokodata.onrender.com/v1/climate/monthly?admin1=Masvingo"
 ```
 
+**Demographics & Agriculture & Health (WDI + FAO + scraping):**
+```console
+$ curl sokodata.onrender.com/v1/demographics/annual
+$ curl sokodata.onrender.com/v1/agriculture/annual
+$ curl sokodata.onrender.com/v1/health-stats/annual
+```
+
 **Catalog - discover every dataset:**
 ```console
 $ curl sokodata.onrender.com/v1/catalog
 ```
-> `markets` (WFP, weekly, 27k obs), `economy` (WB + scraped, weekly/monthly), `climate` (Open-Meteo, daily, 1981-present)
+> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + ZIMSTAT), `agriculture` (WDI + FAO), `health` (WDI + MoHCC)
 
 ### API
 
@@ -60,6 +67,11 @@ $ curl sokodata.onrender.com/v1/catalog
 | `GET /v1/economy/fuel` | Fuel prices by type (ZERA scrape) |
 | `GET /v1/climate/daily?admin1=&start=&end=` | Daily precip + temp by admin1 (Open-Meteo) |
 | `GET /v1/climate/monthly?admin1=` | Monthly aggregates |
+| `GET /v1/demographics/annual` | Population, growth, urban share (WDI) |
+| `GET /v1/demographics/census?admin1=` | 2022 Census by province (ZIMSTAT scrape) |
+| `GET /v1/agriculture/annual` | Cereal yield, agri GDP, food indices (WDI) |
+| `GET /v1/agriculture/fao/maize` | Maize tonnes (FAO FAOSTAT) |
+| `GET /v1/health-stats/annual` | Infant/under-5 mortality, immunization (WDI) |
 | `GET /health` | Dataset coverage + data provenance |
 
 Interactive OpenAPI docs ship at `/docs` when the server runs.
@@ -69,13 +81,16 @@ Interactive OpenAPI docs ship at `/docs` when the server runs.
 ```bash
 pip install -e ".[dev]"          # add [pdf] for ZIMSTAT/ZERA PDF extraction: pip install -e ".[dev,pdf]"
 
-# build the commons (markets + economy + climate)
+# build the commons (markets + economy + climate + demographics + agriculture + health)
 python -m sokodata.etl_run
 
 # or run one dataset at a time:
 python -m sokodata.datasets.markets.etl
 python -m sokodata.datasets.economy.etl
 python -m sokodata.datasets.climate.etl --admin1 Harare --start 2024-01-01
+python -m sokodata.datasets.demographics.etl
+python -m sokodata.datasets.agriculture.etl
+python -m sokodata.datasets.health.etl
 
 # legacy shim still works:
 python -m sokodata.etl.run --skip-fetch
@@ -140,19 +155,16 @@ The dev access token expires every 24h — refresh it on the API Setup page, or 
 
 ## Architecture
 
+ ```
+  Commons                              FastAPI
+  datasets/markets ─┐                   ├─ /v1/catalog
+   HDX WFP (CSV)                    ├─ /v1/markets, /v1/commodities, /v1/prices
+  datasets/economy ─┤                   ├─ /v1/economy/*, /v1/climate/*
+  datasets/climate ─┤── SQLite ─────────┤  /v1/demographics/*, /v1/agriculture/*
+  datasets/demographics ─┤              ├─ /v1/health-stats/*
+  datasets/agriculture ──┤              └─ /v1/insights/*, /health
+  datasets/health ─┘                   core/fetch: open_api | html_scrape | pdf_extract
 ```
- Commons                              FastAPI
- datasets/markets ─┐                   ├─ /v1/catalog
-  HDX WFP (CSV, weekly)               ├─ /v1/markets, /v1/commodities
-   fetch → clean → store ─┐           ├─ /v1/prices, /v1/prices/latest
-                          ├─ SQLite ──┤  /v1/insights/movers, /v1/insights/anomalies
- datasets/economy ─┤      │           ├─ /v1/economy/rates, /v1/economy/cpi, /v1/economy/fuel
-  WB API + RBZ/ZERA scrape│           └─ /v1/climate/daily, /v1/climate/monthly
-   (HTML/PDF via core/fetch)         core/fetch: open_api | html_scrape | pdf_extract
-                          │
- datasets/climate ─┘      │
-  Open-Meteo/NASA POWER ──┘
-   (no scrape, daily 1981-present)
 ```
 
 *   **Zero-infra warehouse** — SQLite with enforced natural keys and indexes; swap for Postgres later without touching the API layer. Per-dataset tables (`prices`, `economy_*`, `climate_*`) + `dataset_meta`.
@@ -170,13 +182,16 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [x] Markets dataset (WFP, 27k obs, 486 markets) + API + dashboard
 - [x] Economy dataset (World Bank + RBZ/ZERA/ZIMSTAT scrapers) + `/v1/economy/*`
 - [x] Climate dataset (Open-Meteo/NASA POWER, daily 1981-present) + `/v1/climate/*`
+- [x] Demographics (WDI + ZIMSTAT 2022 Census) + `/v1/demographics/*`
+- [x] Agriculture (WDI + FAO FAOSTAT + Agritex scrape) + `/v1/agriculture/*`
+- [x] Health (WDI + MoHCC scrape) + `/v1/health-stats/*`
 - [x] Unified catalog `GET /v1/catalog` + unified ETL `python -m sokodata.etl_run`
 - [x] Telegram digest (channel push, GitHub Actions cron)
 - [x] WhatsApp bot (on-demand digest replies via Cloud API)
 - [ ] WhatsApp push notifications (paid template messages) + per-user subscriptions
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
-- [ ] Demographics (2022 Census) + Agriculture production as next commons pillars
-- [ ] Seasonal baselines + harvest-cycle forecasting (ML) linking markets ↔ climate ↔ economy
+- [ ] Education + Energy + Water as next commons pillars
+- [ ] Seasonal baselines + harvest-cycle forecasting (ML) linking markets ↔ climate ↔ economy ↔ agriculture
 - [ ] Digital Public Goods (DPG) submission as a commons
 
 ## Development
