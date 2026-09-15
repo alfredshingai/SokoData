@@ -21,13 +21,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData commons ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
-    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict"], default=None, help="run only these datasets (repeatable)")
+    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial"], default=None, help="run only these datasets (repeatable)")
     parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     args = parser.parse_args()
 
-    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict"}
+    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial"}
 
     if "markets" in only:
         from sokodata.datasets.markets.etl import run_etl as run_markets
@@ -145,6 +145,41 @@ def main() -> None:
             run_ict(args.data_dir, args.db)
         except Exception as e:
             log.warning("ict ETL failed (commons continues): %s", e)
+    if "finance" in only:
+        try:
+            from sokodata.datasets.finance.etl import run_etl as run_finance
+
+            run_finance(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("finance ETL failed (commons continues): %s", e)
+    if "tourism" in only:
+        try:
+            from sokodata.datasets.tourism.etl import run_etl as run_tourism
+
+            run_tourism(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("tourism ETL failed (commons continues): %s", e)
+    if "aid" in only:
+        try:
+            from sokodata.datasets.aid.etl import run_etl as run_aid
+
+            run_aid(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("aid ETL failed (commons continues): %s", e)
+    if "gender" in only:
+        try:
+            from sokodata.datasets.gender.etl import run_etl as run_gender
+
+            run_gender(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("gender ETL failed (commons continues): %s", e)
+    if "geospatial" in only:
+        try:
+            from sokodata.datasets.geospatial.etl import run_etl as run_geo
+
+            run_geo(args.data_dir, args.db)
+        except Exception as e:
+            log.warning("geospatial ETL failed (commons continues): %s", e)
 
     log.info("commons ETL done: %s", only)
 

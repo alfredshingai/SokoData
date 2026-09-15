@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
-from sokodata.api.routers import agriculture, catalog, climate, commodities, demographics, economy, education, energy, environment, governance, health as health_router, ict, insights, labour, markets, mining, poverty, prices, trade, transport, water, webhooks
+from sokodata.api.routers import agriculture, aid, catalog, climate, commodities, demographics, economy, education, energy, environment, finance, gender, geospatial, governance, health as health_router, ict, insights, labour, markets, mining, poverty, prices, tourism, trade, transport, water, webhooks
 from sokodata.config import DATA_CREDIT, DB_PATH
 from sokodata.datasets.markets.store import connect
 
@@ -110,6 +110,11 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(environment.router, prefix="/v1")
     app.include_router(poverty.router, prefix="/v1")
     app.include_router(ict.router, prefix="/v1")
+    app.include_router(finance.router, prefix="/v1")
+    app.include_router(tourism.router, prefix="/v1")
+    app.include_router(aid.router, prefix="/v1")
+    app.include_router(gender.router, prefix="/v1")
+    app.include_router(geospatial.router, prefix="/v1")
     app.include_router(webhooks.router)
     return app
 
