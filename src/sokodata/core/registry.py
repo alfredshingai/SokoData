@@ -150,6 +150,39 @@ DATASETS: dict[str, DatasetMeta] = {
         status="active",
         tags=["health", "mortality", "immunization"],
     ),
+    "education": DatasetMeta(
+        id="education",
+        label="Education",
+        description="Primary/secondary enrollment, literacy, completion. World Bank WDI + MoPSE scrape.",
+        sources=[
+            {"name": "World Bank WDI Education", "url": "https://data.worldbank.org/indicator/SE.PRM.NENR", "license": "CC BY-4.0"},
+            {"name": "MoPSE Zimbabwe", "url": "https://www.mopse.gov.zw/", "license": "public"},
+        ],
+        tables=["education_annual"],
+        update_frequency="annual",
+        coverage="1960-present annual education indicators",
+        fetch_strategy="mixed",
+        etl_module="sokodata.datasets.education.etl",
+        status="active",
+        tags=["education", "literacy", "enrollment"],
+    ),
+    "energy": DatasetMeta(
+        id="energy",
+        label="Energy",
+        description="Electricity access, consumption, renewable share. World Bank WDI + ZESA/ZERA scrape.",
+        sources=[
+            {"name": "World Bank WDI Energy", "url": "https://data.worldbank.org/indicator/EG.ELC.ACCS.ZS", "license": "CC BY-4.0"},
+            {"name": "ZESA Holdings", "url": "https://www.zesa.co.zw/", "license": "public"},
+            {"name": "ZERA", "url": "https://www.zera.co.zw/", "license": "public"},
+        ],
+        tables=["energy_annual"],
+        update_frequency="annual",
+        coverage="1960-present annual energy indicators",
+        fetch_strategy="mixed",
+        etl_module="sokodata.datasets.energy.etl",
+        status="active",
+        tags=["energy", "electricity", "renewable"],
+    ),
 }
 
 
