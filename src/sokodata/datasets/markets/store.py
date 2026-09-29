@@ -9,6 +9,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS markets (
     market_id  INTEGER PRIMARY KEY,
     market     TEXT NOT NULL,
+    country    TEXT NOT NULL,
     countryiso3 TEXT,
     admin1     TEXT,
     admin2     TEXT,
@@ -28,12 +29,15 @@ CREATE TABLE IF NOT EXISTS prices (
     currency     TEXT NOT NULL,
     price        REAL NOT NULL,
     usdprice     REAL,
+    country      TEXT NOT NULL,
     PRIMARY KEY (date, market_id, commodity_id, pricetype, priceflag)
 );
 
 CREATE INDEX IF NOT EXISTS idx_prices_commodity_market_date
     ON prices (commodity_id, market_id, date);
 CREATE INDEX IF NOT EXISTS idx_prices_date ON prices (date);
+CREATE INDEX IF NOT EXISTS idx_prices_country ON prices (country);
+CREATE INDEX IF NOT EXISTS idx_markets_country ON markets (country);
 """
 
 
@@ -86,6 +90,7 @@ def load_tables(
         "currency",
         "price",
         "usdprice",
+        "country",
     ]
     price_rows = prices[storage_cols]
     init_schema(conn)

@@ -9,7 +9,7 @@ from sokodata.api.schemas import PricePoint
 router = APIRouter(tags=["prices"])
 
 SELECT_PRICE = """
-    SELECT p.date, p.market_id, m.market, m.admin1, p.commodity_id, p.commodity,
+    SELECT p.date, p.market_id, m.market, m.admin1, m.country, p.commodity_id, p.commodity,
            p.unit, p.priceflag, p.pricetype, p.currency, p.price, p.usdprice
     FROM prices p JOIN markets m ON m.market_id = p.market_id
 """
@@ -29,6 +29,7 @@ def _require_commodity(df, commodity_id: int) -> None:
 @router.get("/prices", response_model=list[PricePoint])
 def price_series(
     request: Request,
+    country: str | None = Query(default=None, max_length=3, description="Country ISO3 code (ZW, KE)"),
     market_id: int | None = Query(default=None),
     commodity_id: int | None = Query(default=None),
     start: Date | None = Query(default=None, description="Inclusive start date (YYYY-MM-DD)"),
@@ -39,6 +40,9 @@ def price_series(
 ):
     """Price observations, oldest first. Combine filters as needed."""
     clauses, params = [], []
+    if country:
+        clauses.append("p.country = ?")
+        params.append(country.upper())
     if market_id is not None:
         _require_market(request.app.state.conn, market_id)
         clauses.append("p.market_id = ?")
@@ -70,12 +74,15 @@ def price_series(
 @router.get("/prices/latest", response_model=list[PricePoint])
 def latest_prices(
     request: Request,
+    country: str | None = Query(default=None, max_length=3, description="Country ISO3 code (ZW, KE)"),
     commodity_id: int | None = Query(default=None, description="Omit for all commodities"),
     market_id: int | None = Query(default=None),
     limit: int = Query(default=500, ge=1, le=2000),
 ):
     """Most recent observation per market (per commodity when unspecified)."""
     df = request.app.state.prices
+    if country:
+        df = df[df["country"] == country.upper()]
     if commodity_id is not None:
         _require_commodity(df, commodity_id)
     if market_id is not None:

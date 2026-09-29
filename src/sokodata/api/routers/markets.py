@@ -10,16 +10,21 @@ router = APIRouter(tags=["markets"])
 @router.get("/markets", response_model=list[Market])
 def list_markets(
     request: Request,
+    country: str | None = Query(default=None, max_length=3, description="Country ISO3 code (ZW, KE)"),
     q: str | None = Query(default=None, max_length=60, description="Case-insensitive name filter"),
     admin1: str | None = Query(default=None, max_length=60, description="Province filter"),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ):
-    """List markets, alphabetically. Filter by name fragment or province."""
-    rows = request.app.state.conn.execute(
-        "SELECT market_id, market, countryiso3, admin1, admin2, latitude, longitude "
-        "FROM markets ORDER BY market"
-    ).fetchall()
+    """List markets, alphabetically. Filter by country, name fragment or province."""
+    sql = "SELECT market_id, market, country, countryiso3, admin1, admin2, latitude, longitude FROM markets"
+    params = []
+    if country:
+        sql += " WHERE country = ?"
+        params.append(country.upper())
+    sql += " ORDER BY market LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+    rows = request.app.state.conn.execute(sql, params).fetchall()
     items = [dict(r) for r in rows]
     if q:
         ql = q.lower()
@@ -34,7 +39,7 @@ def list_markets(
 def get_market(market_id: int, request: Request):
     """Get one market by ID."""
     row = request.app.state.conn.execute(
-        "SELECT market_id, market, countryiso3, admin1, admin2, latitude, longitude "
+        "SELECT market_id, market, country, countryiso3, admin1, admin2, latitude, longitude "
         "FROM markets WHERE market_id = ?",
         (market_id,),
     ).fetchone()

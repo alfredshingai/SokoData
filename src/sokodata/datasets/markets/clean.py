@@ -61,7 +61,7 @@ def _check_columns(df: pd.DataFrame, expected: list[str], label: str) -> None:
         raise SchemaDrift(f"{label}: upstream schema changed, missing columns: {sorted(missing)}")
 
 
-def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
+def clean_prices(df: pd.DataFrame, country: str = "ZW") -> pd.DataFrame:
     if df.empty:
         log.warning("clean_prices: empty dataframe, returning empty")
         return df
@@ -78,6 +78,7 @@ def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
     out["longitude"] = pd.to_numeric(out["longitude"], errors="coerce")
     out["price"] = pd.to_numeric(out["price"], errors="coerce")
     out["usdprice"] = pd.to_numeric(out["usdprice"], errors="coerce")
+    out["country"] = country
 
     before = len(out)
     out = out.dropna(subset=["date", "market_id", "commodity_id", "price"])
@@ -126,7 +127,7 @@ def _null_implausible_usd(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def clean_markets(df: pd.DataFrame) -> pd.DataFrame:
+def clean_markets(df: pd.DataFrame, country: str = "ZW") -> pd.DataFrame:
     if df.empty:
         log.warning("clean_markets: empty dataframe, returning empty")
         return df
@@ -137,6 +138,7 @@ def clean_markets(df: pd.DataFrame) -> pd.DataFrame:
     out["market_id"] = pd.to_numeric(out["market_id"], errors="coerce").astype("Int64")
     out["latitude"] = pd.to_numeric(out["latitude"], errors="coerce")
     out["longitude"] = pd.to_numeric(out["longitude"], errors="coerce")
+    out["country"] = country
     out = out.dropna(subset=["market_id"]).drop_duplicates(subset="market_id", keep="last")
     log.info("clean_markets: %d markets", len(out))
     return out

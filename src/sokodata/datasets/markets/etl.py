@@ -44,8 +44,9 @@ def run_etl(data_dir: Path, db_path: Path, *, skip_fetch: bool = False, country:
         raw_markets = pd.DataFrame()
         log.warning("Markets file empty for %s, skipping markets ETL", country)
         return 0, 0
-    prices = clean_prices(raw_prices)
-    markets = clean_markets(raw_markets)
+
+    prices = clean_prices(raw_prices, country=country)
+    markets = clean_markets(raw_markets, country=country)
 
     conn = connect(db_path)
     try:
