@@ -24,6 +24,7 @@ from .transport import router as transport_router
 from .water import router as water_router
 from .webhooks import router as webhooks_router
 from .webhooks import whatsapp_router
+from .analyze import router as analyze_router
 from .agriculture import router as agriculture_router
 from .aid import router as aid_router
 from .auth import router as auth_router
@@ -75,6 +76,6 @@ __all__ = [
     "environment", "finance", "gender", "geospatial", "governance", "health",
     "ict", "insights", "labour", "markets", "meta", "mining", "poverty", "prices",
     "tourism", "trade", "transport", "water", "webhooks", "whatsapp_router",
-    "agriculture", "aid", "auth", "climate", "export", "tourism", "trade",
+    "agriculture", "aid", "auth", "analyze", "climate", "export", "tourism", "trade",
     "transport", "webhooks",
 ]

@@ -21,6 +21,7 @@ from sokodata.api.routers import (
     health as health_router, ict, insights, labour, markets, meta, mining, poverty,
     prices, tourism, trade, transport, water, webhooks, whatsapp_router,
 )
+from sokodata.api.routers.analyze import router as analyze_router
 from sokodata.config import DATA_CREDIT, DB_PATH
 from sokodata.datasets.markets.store import connect
 
@@ -123,6 +124,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(meta, prefix="/v1")
     app.include_router(auth, prefix="/v1")
     app.include_router(export, prefix="/v1")
+    app.include_router(analyze_router, prefix="/v1")
     app.include_router(whatsapp_router)
     app.include_router(webhooks)
     return app
