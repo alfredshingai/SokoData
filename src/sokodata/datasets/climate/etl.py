@@ -16,11 +16,13 @@ log = logging.getLogger(__name__)
 def run_etl(
     data_dir: Path = RAW_DIR,
     db_path: Path = DB_PATH,
+    *,
+    country: str = "ZW",
     admin1_list: list[str] | None = None,
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> dict[str, int]:
-    raw = fetch_climate_all(data_dir, admin1_list=admin1_list, start_date=start_date, end_date=end_date)
+    raw = fetch_climate_all(data_dir, country=country, admin1_list=admin1_list, start_date=start_date, end_date=end_date)
     daily = clean_climate(raw)
     monthly = to_monthly(daily)
 
@@ -37,11 +39,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData climate ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
+    parser.add_argument("--country", default="ZW", help="country ISO3 code (ZW, KE, etc.)")
     parser.add_argument("--admin1", nargs="*", default=None, help="limit to admin1 names")
     parser.add_argument("--start", default=None)
     parser.add_argument("--end", default=None)
     args = parser.parse_args()
-    run_etl(args.data_dir, args.db, admin1_list=args.admin1, start_date=args.start, end_date=args.end)
+    run_etl(args.data_dir, args.db, country=args.country, admin1_list=args.admin1, start_date=args.start, end_date=args.end)
 
 
 if __name__ == "__main__":

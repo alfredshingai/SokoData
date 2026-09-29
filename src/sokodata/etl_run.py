@@ -46,7 +46,7 @@ def main() -> None:
         try:
             from sokodata.datasets.climate.etl import run_etl as run_climate
 
-            run_climate(args.data_dir, args.db, admin1_list=args.climate_admin1, start_date=args.climate_start)
+            run_climate(args.data_dir, args.db, country=args.country, admin1_list=args.climate_admin1, start_date=args.climate_start)
         except Exception as e:
             log.warning("climate ETL failed (commons continues): %s", e)
     if "demographics" in only:
