@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 from sokodata.core.auth import get_auth_context
 from sokodata.core.registry import list_datasets
 from sokodata.datasets.markets.store import connect as db_connect
+from sokodata.datasets.markets.analysis.seasonal import anomalies, movers
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -304,6 +305,187 @@ def join_summary(
         return results
     except Exception as e:
         logger.error(f"Join summary failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.get("/anomalies")
+def detect_anomalies(
+    table: str = Query(..., description="Table name"),
+    column: str = Query(..., description="Column to check for anomalies"),
+    threshold: float = Query(default=2.0, description="Z-score threshold for anomaly detection"),
+    country: str | None = Query(default=None, max_length=3),
+    start: Date | None = Query(default=None),
+    end: Date | None = Query(default=None),
+    admin1: str | None = Query(default=None),
+):
+    """Detect anomalies in a single dataset column using robust z-score (MAD-based)."""
+    from sokodata.datasets.markets.store import connect as db_connect
+    
+    conn = db_connect("data/sokodata.db", read_only=True)
+    try:
+        df = _load_table(conn, table, country=country, start=start, end=end, admin1=admin1)
+        if df.empty:
+            raise HTTPException(status_code=404, detail=f"No data in table {table}")
+        
+        if column not in df.columns:
+            raise HTTPException(status_code=400, detail=f"Column {column} not found in table {table}")
+        
+        # Use the existing anomaly detection from seasonal module
+        anomalies = anomalies(df, threshold=threshold)
+        
+        return {
+            "table": table,
+            "column": column,
+            "threshold": threshold,
+            "anomaly_count": len(anomalies),
+            "anomalies": anomalies
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Anomaly detection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.get("/anomalies/correlated")
+def correlated_anomalies(
+    table_x: str = Query(..., description="First dataset"),
+    column_x: str = Query(..., description="Column in first dataset"),
+    table_y: str = Query(..., description="Second dataset"),
+    column_y: str = Query(..., description="Column in second dataset"),
+    join_on: list[str] = Query(default=["country", "date"], description="Join keys"),
+    threshold: float = Query(default=2.0, description="Z-score threshold for anomaly detection"),
+    country: str | None = Query(default=None, max_length=3),
+    start: Date | None = Query(default=None),
+    end: Date | None = Query(default=None),
+    admin1: str | None = Query(default=None),
+):
+    """Find correlated anomalies between two joined datasets.
+    
+    Returns anomalies that occur at the same time in both datasets.
+    """
+    from sokodata.datasets.markets.store import connect as db_connect
+    
+    conn = db_connect("data/sokodata.db", read_only=True)
+    try:
+        df_x = _load_table(conn, table_x, country=country, start=start, end=end, admin1=admin1)
+        df_y = _load_table(conn, table_y, country=country, start=start, end=end, admin1=admin1)
+        
+        if df_x.empty or df_y.empty:
+            raise HTTPException(status_code=404, detail="No data in one or both datasets")
+        
+        if column_x not in df_x.columns or column_y not in df_y.columns:
+            raise HTTPException(status_code=400, detail="Specified columns not found")
+        
+        # Detect anomalies in both datasets
+        anomalies_x = anomalies(df_x, threshold=threshold)
+        anomalies_y = anomalies(df_y, threshold=threshold)
+        
+        # Join on keys to find correlated anomalies
+        if not anomalies_x.empty and not anomalies_y.empty:
+            # Get the anomalous points
+            merged_x = df_x[df_x.index.isin(anomalies_x.index)].copy()
+            merged_y = df_y[df_y.index.isin(anomalies_y.index)].copy()
+            
+            # Join on keys
+            merged = pd.merge(merged_x, merged_y, on=join_on, how="inner")
+        else:
+            merged = pd.DataFrame()
+        
+        return {
+            "table_x": table_x,
+            "column_x": column_x,
+            "table_y": table_y,
+            "column_y": column_y,
+            "join_keys": join_on,
+            "threshold": threshold,
+            "anomaly_count_x": len(anomalies_x),
+            "anomaly_count_y": len(anomalies_y),
+            "correlated_anomaly_count": len(merged),
+            "correlated_anomalies": merged.to_dict(orient="records") if not merged.empty else []
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Correlated anomaly detection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.get("/anomalies/pattern")
+def anomaly_pattern(
+    table: str = Query(..., description="Table name"),
+    column: str = Query(..., description="Column to analyze"),
+    window: int = Query(default=30, description="Rolling window size for pattern detection"),
+    country: str | None = Query(default=None, max_length=3),
+    start: Date | None = Query(default=None),
+    end: Date | None = Query(default=None),
+    admin1: str | None = Query(default=None),
+):
+    """Detect anomaly patterns (seasonal, trend, level shifts) in a time series."""
+    from sokodata.datasets.markets.store import connect as db_connect
+    
+    conn = db_connect("data/sokodata.db", read_only=True)
+    try:
+        df = _load_table(conn, table, country=country, start=start, end=end, admin1=admin1)
+        if df.empty:
+            raise HTTPException(status_code=404, detail=f"No data in table {table}")
+        
+        if column not in df.columns:
+            raise HTTPException(status_code=400, detail=f"Column {column} not found")
+        
+        # Simple pattern detection using rolling statistics
+        series = df.set_index("date")[column].sort_index()
+        
+        # Rolling mean and std
+        rolling_mean = series.rolling(window=window, center=True).mean()
+        rolling_std = series.rolling(window=window, center=True).std()
+        
+        # Z-score
+        z_score = (series - rolling_mean) / rolling_std
+        
+        # Detect anomalies
+        anomalies = z_score.abs() > 2.0
+        
+        # Detect level shifts (rolling mean change)
+        mean_diff = rolling_mean.diff().abs()
+        level_shifts = mean_diff > mean_diff.quantile(0.95)
+        
+        # Trend detection (linear regression slope over window)
+        def rolling_trend(s):
+            if len(s.dropna()) < 3:
+                return np.nan
+            x = np.arange(len(s))
+            y = s.values
+            mask = ~np.isnan(y)
+            if mask.sum() < 3:
+                return np.nan
+            slope = np.polyfit(x[mask], y[mask], 1)[0]
+            return slope
+        
+        trend = series.rolling(window=window).apply(rolling_trend, raw=True)
+        trend_changes = trend.diff().abs() > trend.diff().abs().quantile(0.95)
+        
+        return {
+            "table": table,
+            "column": column,
+            "window": window,
+            "anomaly_count": int(anomalies.sum()),
+            "anomalies": z_score[anomalies].to_dict(),
+            "level_shift_count": int(level_shifts.sum()),
+            "level_shifts": z_score[level_shifts].to_dict(),
+            "trend_change_count": int(trend_changes.sum()),
+            "trend_changes": z_score[trend_changes].to_dict(),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Anomaly pattern detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
