@@ -13,13 +13,13 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 log = logging.getLogger(__name__)
 
 
-def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH) -> dict[str, int]:
-    raw = fetch_geospatial_all(data_dir)
+def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW") -> dict[str, int]:
+    raw = fetch_geospatial_all(country, data_dir)
     meta = clean_metadata(raw["metadata"])
     # also download GeoJSON files to disk (best-effort)
     try:
-        fetch_admin_boundaries(data_dir, level=1)
-        fetch_admin_boundaries(data_dir, level=2)
+        fetch_admin_boundaries(country, data_dir, level=1)
+        fetch_admin_boundaries(country, data_dir, level=2)
     except Exception as e:
         log.warning("GeoJSON download best-effort failed: %s", e)
     conn = connect(db_path)
@@ -35,8 +35,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData geospatial ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
+    parser.add_argument("--country", default="ZW", help="country ISO3 code (ZW, KE, etc.)")
     args = parser.parse_args()
-    run_etl(args.data_dir, args.db)
+    run_etl(args.data_dir, args.db, country=args.country)
 
 
 if __name__ == "__main__":

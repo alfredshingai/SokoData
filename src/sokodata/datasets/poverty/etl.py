@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 log = logging.getLogger(__name__)
 
 
-def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH) -> dict[str, int]:
-    raw = fetch_poverty_all(data_dir)
+def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW") -> dict[str, int]:
+    raw = fetch_poverty_all(country, data_dir)
     annual = clean_annual(raw["annual"])
     conn = connect(db_path)
     try:
@@ -29,8 +29,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData poverty ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
+    parser.add_argument("--country", default="ZW", help="country ISO3 code (ZW, KE, etc.)")
     args = parser.parse_args()
-    run_etl(args.data_dir, args.db)
+    run_etl(args.data_dir, args.db, country=args.country)
 
 
 if __name__ == "__main__":
