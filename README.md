@@ -82,6 +82,17 @@ $ curl sokodata.onrender.com/v1/geospatial/boundaries
 $ curl sokodata.onrender.com/v1/geospatial/markets/geojson
 ```
 
+**Platform Features (Phase 1):**
+```console
+$ curl sokodata.onrender.com/v1/meta/freshness
+$ curl sokodata.onrender.com/v1/meta/freshness/summary
+$ curl -H "X-API-Key: sk_..." sokodata.onrender.com/v1/auth/me
+$ curl -X POST sokodata.onrender.com/v1/auth/keys -d '{"name":"my-key","tier":1}'
+$ curl -X POST sokodata.onrender.com/v1/webhooks -d '{"channel":"http","target":"https://...","events":["price_spike"]}'
+$ curl sokodata.onrender.com/v1/export/prices?format=csv&country=ZW
+$ curl sokodata.onrender.com/v1/export/climate_daily?format=geojson&admin1=Harare
+```
+
 **Catalog - discover every dataset:**
 ```console
 $ curl sokodata.onrender.com/v1/catalog
@@ -127,6 +138,41 @@ $ curl sokodata.onrender.com/v1/catalog
 | `GET /v1/geospatial/boundaries` | HDX COD-AB metadata |
 | `GET /v1/geospatial/markets/geojson` | 486 markets as GeoJSON |
 | `GET /health` | Dataset coverage + data provenance |
+| `GET /v1/meta/freshness` | Per-table last update timestamp + row count |
+| `GET /v1/meta/freshness/summary` | Total rows, tables with data, oldest/newest dates |
+| `GET /v1/auth/me` | Current auth context (tier, rate limits) |
+| `POST /v1/auth/keys` | Create API key (requires tier 2) |
+| `GET /v1/auth/keys` | List API keys |
+| `DELETE /v1/auth/keys/{key_id}` | Revoke API key |
+| `POST /v1/webhooks` | Create webhook subscription |
+| `GET /v1/webhooks` | List webhook subscriptions |
+| `DELETE /v1/webhooks/{webhook_id}` | Delete webhook subscription |
+| `POST /v1/webhooks/test` | Send test webhook |
+| `GET /webhooks/whatsapp` | WhatsApp Cloud API verification |
+| `POST /webhooks/whatsapp` | WhatsApp Cloud API incoming messages |
+| `GET /v1/export/datasets` | List all exportable datasets |
+| `GET /v1/export/{dataset_id}` | Export dataset (CSV, Parquet, GeoJSON) |
+
+Interactive OpenAPI docs ship at `/docs` when the server runs.
+
+### Platform Features (Phase 1)
+
+| Endpoint | What it answers |
+|---|---|
+| `GET /v1/meta/freshness` | Per-table last update timestamp + row count |
+| `GET /v1/meta/freshness/summary` | Total rows, tables with data, oldest/newest dates |
+| `GET /v1/auth/me` | Current auth context (tier, rate limits) |
+| `POST /v1/auth/keys` | Create API key (requires tier 2) |
+| `GET /v1/auth/keys` | List API keys |
+| `DELETE /v1/auth/keys/{key_id}` | Revoke API key |
+| `POST /v1/webhooks` | Create webhook subscription |
+| `GET /v1/webhooks` | List webhook subscriptions |
+| `DELETE /v1/webhooks/{webhook_id}` | Delete webhook subscription |
+| `POST /v1/webhooks/test` | Send test webhook |
+| `GET /webhooks/whatsapp` | WhatsApp Cloud API verification |
+| `POST /webhooks/whatsapp` | WhatsApp Cloud API incoming messages |
+| `GET /v1/export/datasets` | List all exportable datasets |
+| `GET /v1/export/{dataset_id}` | Export dataset (CSV, Parquet, GeoJSON) |
 
 Interactive OpenAPI docs ship at `/docs` when the server runs.
 
@@ -176,8 +222,14 @@ To reuse already-downloaded CSVs: `python -m sokodata.datasets.markets.etl --ski
 The commons principle: **open API first, HTML/PDF scraping where no API exists, graceful fallback always.**
 
 *   **Markets** - `open_api` (HDX CSV, weekly) - `src/sokodata/datasets/markets/fetch.py`
-*   **Economy** - `mixed`: World Bank WDI JSON (CPI/FX, stable fallback) + HTML table scraping for RBZ rates (`fetch_html_tables` + regex) + HTML/PDF for ZERA fuel + PDF extraction for ZIMSTAT CPI via `pdfplumber`. See `src/sokodata/core/fetch.py` for `fetch_html_tables`, `fetch_html_text`, `extract_pdf_tables`, `parse_fuel_text`. Scrapers log warnings and return `[]` if the upstream page/PDF changes — they never kill the ETL.
+*   **Economy** - `mixed`: World Bank WDI JSON (CPI/FX, stable fallback) + HTML table scraping for RBZ rates (`fetch_html_tables` + regex) with **retries + exponential backoff** + **dead-letter queue** via `src/sokodata/core/queue.py`. HTML/PDF for ZERA fuel + PDF extraction for ZIMSTAT CPI via `pdfplumber`. See `src/sokodata/core/fetch.py` for `fetch_html_tables`, `fetch_html_text`, `extract_pdf_tables`, `parse_fuel_text`. Scrapers log warnings and return `[]` if the upstream page/PDF changes — they never kill the ETL.
 *   **Climate** - `open_api` (Open-Meteo Archive + NASA POWER, daily, 1981-present) - no scraping needed. Fetch by `admin1` centroid, stored as `climate_daily`/`climate_monthly`.
+
+**Platform reliability (Phase 1):**
+*   **Task queue** — `src/sokodata/core/queue.py`: SQLite-backed queue with retries (exponential backoff), dead-letter table, worker pattern in `src/sokodata/core/scraper.py`.
+*   **Auth & rate limiting** — 3 tiers (Anonymous 60/min, Keyed 300/min, Premium 1000/min) with in-memory token bucket, API key management via `/v1/auth/keys`.
+*   **Webhooks** — `src/sokodata/core/webhooks.py`: subscription management, HMAC signing, multi-channel (HTTP/Telegram/Slack/Email), broadcast + test endpoint.
+*   **Export** — `src/sokodata/api/routers/export.py`: CSV/Parquet/GeoJSON streaming for all 28 tables with filters (country, date, admin1).
 
 Adding a new angle = add `src/sokodata/datasets/<name>/` with `fetch.py/clean.py/store.py/etl.py` and register it in `src/sokodata/core/registry.py`. The unified runner `src/sokodata/etl_run.py` and `GET /v1/catalog` pick it up automatically.
 
@@ -225,24 +277,35 @@ The dev access token expires every 24h — refresh it on the API Setup page, or 
 
 ## Architecture
 
-  ```
+```
   Commons                              FastAPI
-  datasets/markets ─┐                   ├─ /v1/catalog (14 datasets)
+  datasets/markets ─┐                   ├─ /v1/catalog (22 datasets)
    HDX WFP (CSV)                    ├─ /v1/markets, /v1/commodities, /v1/prices
   datasets/economy/climate ─┤           ├─ /v1/economy/*, /v1/climate/*
   datasets/demographics/agri/health ─┤── SQLite ─┤  /v1/demographics/*, /v1/agriculture/*
   datasets/education/energy/water ─┤   │         ├─ /v1/health-stats/*, /v1/education/*
   datasets/transport/mining/gov/trade/labour ┘   ├─ /v1/energy/*, /v1/water/*, /v1/transport/*
-                                                 ├─ /v1/mining/*, /v1/governance/*, /v1/trade/*, /v1/labour/*
-                                                 └─ /v1/insights/*, /health
-                                        core/fetch: open_api | html_scrape | pdf_extract
-```
+  datasets/environment/poverty/ict/finance/tourism/aid/gender/geospatial ─┘
+                                                  ├─ /v1/mining/*, /v1/governance/*, /v1/trade/*, /v1/labour/*
+                                                  ├─ /v1/environment/*, /v1/poverty/*, /v1/ict/*
+                                                  ├─ /v1/finance/*, /v1/tourism/*, /v1/aid/*, /v1/gender/*
+                                                  ├─ /v1/geospatial/*
+                                                  ├─ /v1/meta/*, /v1/auth/*, /v1/webhooks/*, /v1/export/*
+                                                  └─ /v1/insights/*, /health
+                                         core/fetch: open_api | html_scrape | pdf_extract
+                                         core/queue: task_queue | retries | dead_letter
+                                         core/webhooks: subscriptions | broadcast | HMAC
+                                         core/auth: api_keys | tiers | rate_limits
 ```
 
 *   **Zero-infra warehouse** — SQLite with enforced natural keys and indexes; swap for Postgres later without touching the API layer. Per-dataset tables (`prices`, `economy_*`, `climate_*`) + `dataset_meta`.
 *   **Currency-safe analytics** — every temporal computation uses WFP's USD conversion, with broken hyperinflation-era conversions detected and nulled at load time (see [docs/data_dictionary.md](docs/data_dictionary.md) for the full rules and counts).
 *   **Commons registry** — `src/sokodata/core/registry.py` is the catalog of record. `GET /v1/catalog` and `etl_run.py` read it; new dataset = new folder + registry entry.
 *   **Graceful scraping** — `src/sokodata/core/fetch.py` atomic downloads, `fetch_html_tables` / `extract_pdf_tables` / `parse_fuel_text` log and return `[]` on upstream change instead of raising; ETL continues with open-API fallback.
+*   **Task queue** — `src/sokodata/core/queue.py` SQLite-backed queue with retries (exponential backoff), dead-letter table, worker pattern.
+*   **Auth & rate limits** — 3 tiers (Anonymous 60/min, Keyed 300/min, Premium 1000/min), API key management, in-memory token bucket.
+*   **Webhooks** — `src/sokodata/core/webhooks.py` subscriptions, HMAC signing, multi-channel, broadcast + test.
+*   **Export** — `src/sokodata/api/routers/export.py` CSV/Parquet/GeoJSON streaming for all 28 tables with filters.
 
 ## Data credit & license
 
@@ -276,6 +339,11 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [x] Unified catalog `GET /v1/catalog` (22 datasets) + unified ETL `python -m sokodata.etl_run`
 - [x] Telegram digest (channel push, GitHub Actions cron)
 - [x] WhatsApp bot (on-demand digest replies via Cloud API)
+- [x] Phase 1: Freshness endpoint `/v1/meta/freshness` + nightly GitHub Actions cron
+- [x] Phase 1: Reliability — task queue with retries/dead-letter
+- [x] Phase 1: Auth — API keys with tiered rate limits
+- [x] Phase 1: Webhooks — subscriptions, broadcast, test endpoint
+- [x] Phase 1: Export — CSV/Parquet/GeoJSON streaming for all datasets
 - [ ] WhatsApp push notifications (paid template messages) + per-user subscriptions
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
 - [ ] Geospatial boundaries + Environment/ICT as next commons pillars
