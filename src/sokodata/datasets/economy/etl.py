@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 log = logging.getLogger(__name__)
 
 
-def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH) -> dict[str, int]:
-    raw = fetch_economy_all(data_dir)
+def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW") -> dict[str, int]:
+    raw = fetch_economy_all(country, data_dir)
     rates = clean_rates(raw["rates"])
     cpi = clean_cpi(raw["cpi"])
     fuel = clean_fuel(raw["fuel"])
@@ -32,8 +32,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="SokoData economy ETL")
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
+    parser.add_argument("--country", default="ZW", help="country ISO3 code (ZW, KE, etc.)")
     args = parser.parse_args()
-    run_etl(args.data_dir, args.db)
+    run_etl(args.data_dir, args.db, country=args.country)
 
 
 if __name__ == "__main__":

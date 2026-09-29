@@ -62,6 +62,9 @@ def _check_columns(df: pd.DataFrame, expected: list[str], label: str) -> None:
 
 
 def clean_prices(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        log.warning("clean_prices: empty dataframe, returning empty")
+        return df
     _check_columns(df, PRICE_COLUMNS, "prices")
     out = df[PRICE_COLUMNS].copy()
 
@@ -124,6 +127,9 @@ def _null_implausible_usd(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_markets(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        log.warning("clean_markets: empty dataframe, returning empty")
+        return df
     _check_columns(df, MARKET_COLUMNS, "markets")
     out = df[MARKET_COLUMNS].copy()
     for col in ("market", "countryiso3", "admin1", "admin2"):
