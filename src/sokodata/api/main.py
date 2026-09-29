@@ -15,7 +15,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
-from sokodata.api.routers import agriculture, aid, catalog, climate, commodities, demographics, economy, education, energy, environment, finance, gender, geospatial, governance, health as health_router, ict, insights, labour, markets, meta, mining, poverty, prices, tourism, trade, transport, water, webhooks
+from sokodata.api.routers import (
+    agriculture, aid, auth, catalog, climate, commodities, demographics, economy,
+    education, energy, environment, export, finance, gender, geospatial, governance,
+    health as health_router, ict, insights, labour, markets, meta, mining, poverty,
+    prices, tourism, trade, transport, water, webhooks, whatsapp_router,
+)
 from sokodata.config import DATA_CREDIT, DB_PATH
 from sokodata.datasets.markets.store import connect
 
@@ -89,34 +94,37 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
             data_credit=DATA_CREDIT,
         )
 
-    app.include_router(catalog.router, prefix="/v1")
-    app.include_router(markets.router, prefix="/v1")
-    app.include_router(commodities.router, prefix="/v1")
-    app.include_router(prices.router, prefix="/v1")
-    app.include_router(insights.router, prefix="/v1")
-    app.include_router(economy.router, prefix="/v1")
-    app.include_router(climate.router, prefix="/v1")
-    app.include_router(demographics.router, prefix="/v1")
-    app.include_router(agriculture.router, prefix="/v1")
-    app.include_router(health_router.router, prefix="/v1")
-    app.include_router(education.router, prefix="/v1")
-    app.include_router(energy.router, prefix="/v1")
-    app.include_router(water.router, prefix="/v1")
-    app.include_router(transport.router, prefix="/v1")
-    app.include_router(mining.router, prefix="/v1")
-    app.include_router(governance.router, prefix="/v1")
-    app.include_router(trade.router, prefix="/v1")
-    app.include_router(labour.router, prefix="/v1")
-    app.include_router(environment.router, prefix="/v1")
-    app.include_router(poverty.router, prefix="/v1")
-    app.include_router(ict.router, prefix="/v1")
-    app.include_router(finance.router, prefix="/v1")
-    app.include_router(tourism.router, prefix="/v1")
-    app.include_router(aid.router, prefix="/v1")
-    app.include_router(gender.router, prefix="/v1")
-    app.include_router(geospatial.router, prefix="/v1")
-    app.include_router(meta.router, prefix="/v1")
-    app.include_router(webhooks.router)
+    app.include_router(catalog, prefix="/v1")
+    app.include_router(markets, prefix="/v1")
+    app.include_router(commodities, prefix="/v1")
+    app.include_router(prices, prefix="/v1")
+    app.include_router(insights, prefix="/v1")
+    app.include_router(economy, prefix="/v1")
+    app.include_router(climate, prefix="/v1")
+    app.include_router(demographics, prefix="/v1")
+    app.include_router(agriculture, prefix="/v1")
+    app.include_router(health_router, prefix="/v1")
+    app.include_router(education, prefix="/v1")
+    app.include_router(energy, prefix="/v1")
+    app.include_router(water, prefix="/v1")
+    app.include_router(transport, prefix="/v1")
+    app.include_router(mining, prefix="/v1")
+    app.include_router(governance, prefix="/v1")
+    app.include_router(trade, prefix="/v1")
+    app.include_router(labour, prefix="/v1")
+    app.include_router(environment, prefix="/v1")
+    app.include_router(poverty, prefix="/v1")
+    app.include_router(ict, prefix="/v1")
+    app.include_router(finance, prefix="/v1")
+    app.include_router(tourism, prefix="/v1")
+    app.include_router(aid, prefix="/v1")
+    app.include_router(gender, prefix="/v1")
+    app.include_router(geospatial, prefix="/v1")
+    app.include_router(meta, prefix="/v1")
+    app.include_router(auth, prefix="/v1")
+    app.include_router(export, prefix="/v1")
+    app.include_router(whatsapp_router)
+    app.include_router(webhooks)
     return app
 
 
