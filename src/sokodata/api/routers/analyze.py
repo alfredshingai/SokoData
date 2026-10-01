@@ -5,6 +5,7 @@ import logging
 from datetime import date as Date
 from typing import Any
 
+import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -12,7 +13,7 @@ from fastapi.responses import StreamingResponse
 from sokodata.core.auth import get_auth_context
 from sokodata.core.registry import list_datasets
 from sokodata.datasets.markets.store import connect as db_connect
-from sokodata.datasets.markets.analysis.seasonal import anomalies, movers
+from sokodata.datasets.markets.analysis.seasonal import anomalies, movers, seasonal_baseline
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -47,10 +48,70 @@ JOIN_KEYS = {
     "tourism_annual": ["country", "date"],
     "aid_annual": ["country", "date"],
     "gender_annual": ["country", "date"],
+    "geospatial_metadata": ["name", "format", "url"],
 }
 
 # Default join keys (most common)
 DEFAULT_JOIN_KEYS = ["country", "date", "admin1"]
+
+
+@router.get("/joinable")
+def list_joinable_datasets():
+    """List all datasets and their joinable fields."""
+    return {
+        "datasets": [
+            {"id": ds, "joinable_fields": JOIN_KEYS.get(ds, [])}
+            for ds in JOIN_KEYS.keys()
+        ],
+        "common_join_keys": DEFAULT_JOIN_KEYS,
+    }
+
+
+def _detect_join_keys(left_df: pd.DataFrame, right_df: pd.DataFrame) -> list[str]:
+    """Detect common columns between two dataframes that could be join keys."""
+    left_cols = set(left_df.columns)
+    right_cols = set(right_df.columns)
+    common = left_cols.intersection(right_cols)
+    # Prefer standard join keys
+    preferred = ["country", "date", "admin1", "admin2", "market_id"]
+    return [c for c in preferred if c in common] or list(common)
+
+
+def _load_table(conn, table: str, country: str | None = None, 
+                start: Date | None = None, end: Date | None = None,
+                admin1: str | None = None) -> pd.DataFrame:
+    """Load a table with optional filters."""
+    sql = f"SELECT * FROM {table}"
+    params = []
+    where = []
+    
+    # Check if table has country column
+    if country:
+        # First check if table has country column
+        cols = pd.read_sql(f"PRAGMA table_info({table})", conn)["name"].tolist()
+        if "country" in cols:
+            where.append("country = ?")
+            params.append(country.upper())
+    
+    if start:
+        where.append("date >= ?")
+        params.append(start.isoformat())
+    if end:
+        where.append("date <= ?")
+        params.append(end.isoformat())
+    if admin1:
+        where.append("admin1 = ?")
+        params.append(admin1)
+    
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    
+    # Check if table has date column for ordering
+    cols = pd.read_sql(f"PRAGMA table_info({table})", conn)["name"].tolist()
+    if "date" in cols:
+        sql += " ORDER BY date"
+    
+    return pd.read_sql(sql, conn, params=params)
 
 
 @router.get("/joinable")
@@ -322,6 +383,7 @@ def detect_anomalies(
 ):
     """Detect anomalies in a single dataset column using robust z-score (MAD-based)."""
     from sokodata.datasets.markets.store import connect as db_connect
+    from sokodata.datasets.markets.analysis.seasonal import anomalies
     
     conn = db_connect("data/sokodata.db", read_only=True)
     try:
@@ -369,6 +431,7 @@ def correlated_anomalies(
     Returns anomalies that occur at the same time in both datasets.
     """
     from sokodata.datasets.markets.store import connect as db_connect
+    from sokodata.datasets.markets.analysis.seasonal import anomalies
     
     conn = db_connect("data/sokodata.db", read_only=True)
     try:
@@ -486,6 +549,67 @@ def anomaly_pattern(
         raise
     except Exception as e:
         logger.error(f"Anomaly pattern detection failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@router.get("/forecast")
+def forecast(
+    table: str = Query(..., description="Table name"),
+    column: str = Query(..., description="Column to forecast"),
+    horizon: int = Query(default=30, ge=1, le=365, description="Forecast horizon (days)"),
+    periods: int = Query(default=365, description="Seasonal period (days)"),
+    n_harmonics: int = Query(default=3, ge=1, le=10),
+    country: str | None = Query(default=None, max_length=3),
+    start: Date | None = Query(default=None),
+    end: Date | None = Query(default=None),
+    admin1: str | None = Query(default=None),
+):
+    """Forecast future values using harmonic regression seasonal baseline."""
+    from sokodata.datasets.markets.store import connect as db_connect
+    from sokodata.datasets.markets.analysis.seasonal import seasonal_baseline
+    
+    conn = db_connect("data/sokodata.db", read_only=True)
+    try:
+        df = _load_table(conn, table, country=country, start=start, end=end, admin1=admin1)
+        if df.empty:
+            raise HTTPException(status_code=404, detail=f"No data in table {table}")
+        
+        if column not in df.columns:
+            raise HTTPException(status_code=400, detail=f"Column {column} not found in table {table}")
+        
+        # Use seasonal baseline for forecasting
+        result = seasonal_baseline(
+            df, 
+            column, 
+            date_col="date", 
+            periods=365,  # Use 365 for daily data
+            n_harmonics=3
+        )
+        
+        if "error" in result:
+            raise HTTPException(status_code=500, detail=result["error"])
+        
+        # Generate forecast for the requested horizon
+        forecast_values = result["forecast"][:horizon]
+        forecast_dates = result["forecast_dates"][:horizon]
+        
+        return {
+            "table": table,
+            "column": column,
+            "horizon": horizon,
+            "forecast": forecast_values,
+            "forecast_dates": forecast_dates,
+            "method": "harmonic_regression",
+            "model_r_squared": result["r_squared"],
+            "periods": result["periods"],
+            "n_harmonics": result["n_harmonics"],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Forecast failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()

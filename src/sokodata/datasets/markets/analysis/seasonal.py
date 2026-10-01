@@ -10,6 +10,7 @@ USD price is the comparable series (WFP computes it from parallel-market
 and official rates at observation time).
 """
 
+import numpy as np
 import pandas as pd
 
 # Aggregated rows are market-level aggregates published by WFP; use them for
@@ -162,4 +163,87 @@ def coverage(df: pd.DataFrame) -> dict:
     }
 
 
-__all__ = ["anomalies", "coverage", "dedupe_flag", "movers"]
+__all__ = ["anomalies", "coverage", "dedupe_flag", "movers", "seasonal_baseline"]
+
+
+def seasonal_baseline(
+    df: pd.DataFrame,
+    value_col: str,
+    date_col: str = "date",
+    periods: int = 365,
+    n_harmonics: int = 3,
+) -> dict:
+    """Compute seasonal baseline using harmonic regression.
+    
+    Fits a harmonic regression model to detect seasonal patterns.
+    Returns baseline values and seasonal components.
+    
+    Args:
+        df: DataFrame with date and value columns
+        value_col: Name of the value column
+        date_col: Name of the date column (default: 'date')
+        periods: Number of periods in a cycle (default: 365 for daily data)
+        n_harmonics: Number of harmonics to fit (default: 3)
+    
+    Returns:
+        Dictionary with baseline values, seasonal components, and metadata
+    """
+    df = df.copy()
+    df = df.sort_values(date_col)
+    
+    # Create time index
+    t = np.arange(len(df))
+    y = df[value_col].values
+    dates = df[date_col].values
+    
+    # Remove NaN values
+    mask = ~np.isnan(y)
+    if mask.sum() < 10:
+        return {"error": "Insufficient data points"}
+    
+    t_clean = t[mask]
+    y_clean = y[mask]
+    dates_clean = dates[mask]
+    
+    # Normalize time to [0, 2*pi] for one period
+    t_norm = 2 * np.pi * t_clean / periods
+    
+    # Build design matrix with harmonics
+    X = np.ones((len(y_clean), 1 + 2 * n_harmonics))
+    for k in range(1, n_harmonics + 1):
+        X[:, 2*k - 1] = np.sin(k * 2 * np.pi * t_clean / periods)
+        X[:, 2*k] = np.cos(k * 2 * np.pi * t_clean / periods)
+    
+    # Fit linear regression
+    coeffs, residuals, rank, s = np.linalg.lstsq(X, y_clean, rcond=None)
+    
+    # Predict baseline
+    baseline = X @ coeffs
+    residuals = y_clean - baseline
+    
+    # Seasonal component (without intercept)
+    seasonal = baseline - coeffs[0]
+    
+    # Forecast next period
+    t_future = np.arange(len(df), len(df) + periods)
+    t_future_norm = 2 * np.pi * t_future / periods
+    
+    X_future = np.ones((len(t_future), 1 + 2 * n_harmonics))
+    for k in range(1, n_harmonics + 1):
+        X_future[:, 2*k - 1] = np.sin(k * 2 * np.pi * t_future / periods)
+        X_future[:, 2*k] = np.cos(k * 2 * np.pi * t_future / periods)
+    
+    forecast = X_future @ coeffs
+    
+    return {
+        "baseline": baseline.tolist(),
+        "seasonal": seasonal.tolist(),
+        "residuals": residuals.tolist(),
+        "forecast": forecast.tolist(),
+        "forecast_dates": [str(d) for d in pd.date_range(dates[-1], periods=periods+1, freq='D')[1:]],
+        "coefficients": coeffs.tolist(),
+        "r_squared": 1 - np.sum(residuals**2) / np.sum((y_clean - np.mean(y_clean))**2),
+        "n_observations": int(mask.sum()),
+        "periods": periods,
+        "n_harmonics": n_harmonics,
+    }
