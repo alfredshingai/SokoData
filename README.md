@@ -1,6 +1,6 @@
 # SokoData 🌾
 
-**Open Data Commons for any country. Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial — one API, built entirely on open data.**
+**Open Data Commons for African food markets.** Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial — one API, built entirely on open data, serving 30+ African countries.
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
 > 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
@@ -9,12 +9,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
 [![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)](#development)
+[![DPG](https://img.shields.io/badge/Digital%20Public%20Good-compliant-blue)](https://digitalpublicgoods.net/standard/)
 
 ## Why
 
-A trader in a market, a farmer in a village, an NGO monitoring food security — none of them can easily answer *"what does maize cost today, what is the currency worth, and did it rain where that maize was grown?"*. Country data is fragmented across WFP, central banks, national statistics offices, regulators, and climate APIs — as raw CSVs, PDFs, and HTML tables: no unified API, no provenance, no product for end users.
+A trader in a market, a farmer in a village, an NGO monitoring food security — none of them can easily answer *"what does maize cost today, what is the currency worth, and did it rain where that maize was grown?"*. **African** country data is fragmented across WFP, central banks, national statistics offices, regulators, and climate APIs — as raw CSVs, PDFs, and HTML tables: no unified API, no provenance, no product for end users.
 
-**SokoData is the commons that turns those scattered sources into a clean, documented, queryable product** — one ETL per dataset, one catalog, one API, with honest analytics that survive currency reforms and data revisions.
+**SokoData is the commons that turns those scattered sources into a clean, documented, queryable product** — one ETL per dataset, one catalog, one API, with honest analytics that survive currency reforms and data revisions. Built for **African food markets** but country-agnostic by design.
 
 ## What it gives you
 
@@ -345,7 +346,7 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [ ] Extend to all 98 countries in the WFP feed (config-driven, same pipeline)
 - [ ] Geospatial boundaries + Environment/ICT as next commons pillars
 - [ ] Seasonal baselines + harvest-cycle forecasting (ML) linking markets ↔ climate ↔ economy ↔ agriculture
-- [ ] Digital Public Goods (DPG) submission as a commons
+- [x] Digital Public Goods (DPG) submission as a commons
 
 ## Digital Public Goods Compliance
 
@@ -362,7 +363,7 @@ SokoData is designed to meet [Digital Public Goods Standard](https://digitalpubl
 | **Community** | ✅ | CONTRIBUTING.md, CODE_OF_CONDUCT.md, GOVERNANCE.md, SECURITY.md |
 | **Privacy & Safety** | ✅ | No PII collected; API keys hashed; rate limits; security policy |
 
-**Relevant SDGs**: 2 (Zero Hunger), 8 (Decent Work), 9 (Industry/Innovation), 10 (Reduced Inequalities), 12 (Responsible Consumption), 13 (Climate Action), 17 (Partnerships).
+**Relevant SDGs**: 2 (Zero Hunger), 8 (Decent Work), 9 (Industry/Innovation), 10 (Reduced Inequalities), 12 (Responsible Consumption), 13 (Climate Action), 17 (Partnerships). **Primary focus: African food security (SDG 2)**.
 
 ## Development
 
