@@ -23,13 +23,13 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
     parser.add_argument("--country", default="ZW", help="country ISO3 code (ZW, KE, etc.)")
-    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial"], default=None, help="run only these datasets (repeatable)")
+    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial", "indicators"], default=None, help="run only these datasets (repeatable)")
     parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     args = parser.parse_args()
 
-    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial"}
+    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial", "indicators"}
 
     if "markets" in only:
         from sokodata.datasets.markets.etl import run_etl as run_markets
@@ -182,6 +182,13 @@ def main() -> None:
             run_geo(args.data_dir, args.db)
         except Exception as e:
             log.warning("geospatial ETL failed (commons continues): %s", e)
+    if "indicators" in only:
+        try:
+            from sokodata.datasets.indicators.etl import run_etl as run_indicators
+
+            run_indicators(args.data_dir, args.db, country=args.country)
+        except Exception as e:
+            log.warning("indicators ETL failed (commons continues): %s", e)
 
     log.info("commons ETL done: %s for country %s", only, args.country)
 
