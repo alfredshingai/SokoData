@@ -82,15 +82,12 @@ $ curl sokodata.onrender.com/v1/geospatial/boundaries
 $ curl sokodata.onrender.com/v1/geospatial/markets/geojson
 ```
 
-**Platform Features (Phase 1):**
+**Cross-dataset Analysis (Anomalies + Forecasting):**
 ```console
-$ curl sokodata.onrender.com/v1/meta/freshness
-$ curl sokodata.onrender.com/v1/meta/freshness/summary
-$ curl -H "X-API-Key: sk_..." sokodata.onrender.com/v1/auth/me
-$ curl -X POST sokodata.onrender.com/v1/auth/keys -d '{"name":"my-key","tier":1}'
-$ curl -X POST sokodata.onrender.com/v1/webhooks -d '{"channel":"http","target":"https://...","events":["price_spike"]}'
-$ curl sokodata.onrender.com/v1/export/prices?format=csv&country=ZW
-$ curl sokodata.onrender.com/v1/export/climate_daily?format=geojson&admin1=Harare
+$ curl sokodata.onrender.com/v1/analyze/anomalies?table=prices&column=usdprice&threshold=2.0
+$ curl sokodata.onrender.com/v1/analyze/anomalies/correlated?table_x=prices&column_x=usdprice&table_y=climate_daily&column_y=tmean_c&join_on=country,date
+$ curl sokodata.onrender.com/v1/analyze/anomalies/pattern?table=prices&column=usdprice&window=30
+$ curl sokodata.onrender.com/v1/analyze/forecast?table=prices&column=usdprice&horizon=30
 ```
 
 **Catalog - discover every dataset:**
