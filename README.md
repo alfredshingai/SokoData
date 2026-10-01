@@ -1,6 +1,6 @@
 # SokoData 🌾
 
-**Open Data Commons for Zimbabwe. Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial — one API, built entirely on open data.**
+**Open Data Commons for any country. Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial — one API, built entirely on open data.**
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
 > 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
@@ -12,9 +12,9 @@
 
 ## Why
 
-A trader in Bulawayo, a farmer in Masvingo, an NGO monitoring food security — none of them can easily answer *"what does maize cost today, what is ZiG worth, and did it rain where that maize was grown?"*. Zimbabwe's data is fragmented across WFP, RBZ, ZIMSTAT, ZERA, and climate APIs — as raw CSVs, PDFs, and HTML tables: no unified API, no provenance, no product for end users.
+A trader in a market, a farmer in a village, an NGO monitoring food security — none of them can easily answer *"what does maize cost today, what is the currency worth, and did it rain where that maize was grown?"*. Country data is fragmented across WFP, central banks, national statistics offices, regulators, and climate APIs — as raw CSVs, PDFs, and HTML tables: no unified API, no provenance, no product for end users.
 
-**SokoData is the commons that turns those scattered sources into a clean, documented, queryable product** — one ETL per dataset, one catalog, one API, with honest analytics that survive Zimbabwe's currency history.
+**SokoData is the commons that turns those scattered sources into a clean, documented, queryable product** — one ETL per dataset, one catalog, one API, with honest analytics that survive currency reforms and data revisions.
 
 ## What it gives you
 
@@ -25,7 +25,7 @@ $ curl sokodata.onrender.com/v1/insights/movers?window_days=90
 > Fish (kapenta) at **Marula**: $6.10 → $10.53/kg (**+72%**)
 > Oil (vegetable) at **Gokwe**: $1.70 → $2.74/L (**+61%**)
 
-**Economy (mixed: World Bank API + RBZ/ZERA/ZIMSTAT scraping):**
+**Economy (mixed: World Bank API + central bank/regulator scraping):**
 ```console
 $ curl sokodata.onrender.com/v1/economy/cpi
 $ curl sokodata.onrender.com/v1/economy/rates
@@ -47,28 +47,28 @@ $ curl sokodata.onrender.com/v1/education/annual
 $ curl sokodata.onrender.com/v1/energy/annual
 ```
 
-**Water, Transport, Mining (WDI + ZINWA / MoT / Chamber scrape):**
+**Water, Transport, Mining (WDI + water authority / transport ministry / mining chamber scrape):**
 ```console
 $ curl sokodata.onrender.com/v1/water/annual
 $ curl sokodata.onrender.com/v1/transport/annual
 $ curl sokodata.onrender.com/v1/mining/annual
 ```
 
-**Governance, Trade, Labour (WDI + ZEC / ZimTrade / LFCLS scrape):**
+**Governance, Trade, Labour (WDI + electoral commission / trade authority / labour survey scrape):**
 ```console
 $ curl sokodata.onrender.com/v1/governance/annual
 $ curl sokodata.onrender.com/v1/trade/annual
 $ curl sokodata.onrender.com/v1/labour/annual
 ```
 
-**Environment, Poverty, ICT (WDI + EMA / ZIMSTAT / POTRAZ scrape):**
+**Environment, Poverty, ICT (WDI + environmental agency / stats office / telecom regulator scrape):**
 ```console
 $ curl sokodata.onrender.com/v1/environment/annual
 $ curl sokodata.onrender.com/v1/poverty/annual
 $ curl sokodata.onrender.com/v1/ict/annual
 ```
 
-**Finance, Tourism, Aid (WDI + RBZ / ZTA / OECD scrape):**
+**Finance, Tourism, Aid (WDI + central bank / tourism authority / OECD scrape):**
 ```console
 $ curl sokodata.onrender.com/v1/finance/annual
 $ curl sokodata.onrender.com/v1/tourism/annual
@@ -94,7 +94,7 @@ $ curl sokodata.onrender.com/v1/analyze/forecast?table=prices&column=usdprice&ho
 ```console
 $ curl sokodata.onrender.com/v1/catalog
 ```
-> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + ZIMSTAT), `agriculture` (WDI + FAO), `health` (WDI + MoHCC), `education` (WDI + MoPSE), `energy` (WDI + ZESA), `water` (WDI + ZINWA), `transport` (WDI + MoT), `mining` (WDI + Chamber/RBZ), `governance` (WDI CPIA + ZEC), `trade` (WDI + ZimTrade), `labour` (WDI + LFCLS), `environment` (WDI + EMA), `poverty` (WDI + PICES), `ict` (WDI + POTRAZ), `finance` (WDI + RBZ), `tourism` (WDI + ZTA), `aid` (WDI + OECD), `gender` (WDI + UN Women), `geospatial` (HDX COD-AB)
+> `markets` (WFP), `economy` (WB + scraped), `climate` (Open-Meteo), `demographics` (WDI + census), `agriculture` (WDI + FAO), `health` (WDI + MoH), `education` (WDI + MoE), `energy` (WDI + energy ministry), `water` (WDI + water authority), `transport` (WDI + transport ministry), `mining` (WDI + mining chamber), `governance` (WDI + electoral commission), `trade` (WDI + trade authority), `labour` (WDI + labour survey), `environment` (WDI + environmental agency), `poverty` (WDI + stats office), `ict` (WDI + telecom regulator), `finance` (WDI + central bank), `tourism` (WDI + tourism authority), `aid` (WDI + OECD), `gender` (WDI + UN Women), `geospatial` (HDX COD-AB)
 
 ### API
 
@@ -107,13 +107,13 @@ $ curl sokodata.onrender.com/v1/catalog
 | `GET /v1/prices/latest?commodity_id=` | Most recent price per market |
 | `GET /v1/insights/movers?window_days=90` | Largest USD price changes per market/commodity |
 | `GET /v1/insights/anomalies?threshold=2` | Prices deviating from their own 24-month robust norm |
-| `GET /v1/economy/rates` | ZiG/USD rates (RBZ scrape + World Bank fallback) |
-| `GET /v1/economy/cpi` | CPI / inflation (ZIMSTAT PDF + World Bank) |
-| `GET /v1/economy/fuel` | Fuel prices by type (ZERA scrape) |
+| `GET /v1/economy/rates` | FX rates (central bank scrape + World Bank fallback) |
+| `GET /v1/economy/cpi` | CPI / inflation (stats office PDF + World Bank) |
+| `GET /v1/economy/fuel` | Fuel prices by type (energy regulator scrape) |
 | `GET /v1/climate/daily?admin1=&start=&end=` | Daily precip + temp by admin1 (Open-Meteo) |
 | `GET /v1/climate/monthly?admin1=` | Monthly aggregates |
 | `GET /v1/demographics/annual` | Population, growth, urban share (WDI) |
-| `GET /v1/demographics/census?admin1=` | 2022 Census by province (ZIMSTAT scrape) |
+| `GET /v1/demographics/census?admin1=` | 2022 Census by province (stats office scrape) |
 | `GET /v1/agriculture/annual` | Cereal yield, agri GDP, food indices (WDI) |
 | `GET /v1/agriculture/fao/maize` | Maize tonnes (FAO FAOSTAT) |
 | `GET /v1/health-stats/annual` | Infant/under-5 mortality, immunization (WDI) |
@@ -176,7 +176,7 @@ Interactive OpenAPI docs ship at `/docs` when the server runs.
 ## Quickstart
 
 ```bash
-pip install -e ".[dev]"          # add [pdf] for ZIMSTAT/ZERA PDF extraction: pip install -e ".[dev,pdf]"
+pip install -e ".[dev]"          # add [pdf] for stats office/regulator PDF extraction: pip install -e ".[dev,pdf]"
 
 # build the commons (all 22 datasets)
 python -m sokodata.etl_run
@@ -219,7 +219,7 @@ To reuse already-downloaded CSVs: `python -m sokodata.datasets.markets.etl --ski
 The commons principle: **open API first, HTML/PDF scraping where no API exists, graceful fallback always.**
 
 *   **Markets** - `open_api` (HDX CSV, weekly) - `src/sokodata/datasets/markets/fetch.py`
-*   **Economy** - `mixed`: World Bank WDI JSON (CPI/FX, stable fallback) + HTML table scraping for RBZ rates (`fetch_html_tables` + regex) with **retries + exponential backoff** + **dead-letter queue** via `src/sokodata/core/queue.py`. HTML/PDF for ZERA fuel + PDF extraction for ZIMSTAT CPI via `pdfplumber`. See `src/sokodata/core/fetch.py` for `fetch_html_tables`, `fetch_html_text`, `extract_pdf_tables`, `parse_fuel_text`. Scrapers log warnings and return `[]` if the upstream page/PDF changes — they never kill the ETL.
+*   **Economy** - `mixed`: World Bank WDI JSON (CPI/FX, stable fallback) + HTML table scraping for central bank rates (`fetch_html_tables` + regex) with **retries + exponential backoff** + **dead-letter queue** via `src/sokodata/core/queue.py`. HTML/PDF for energy regulator fuel + PDF extraction for stats office CPI via `pdfplumber`. See `src/sokodata/core/fetch.py` for `fetch_html_tables`, `fetch_html_text`, `extract_pdf_tables`, `parse_fuel_text`. Scrapers log warnings and return `[]` if the upstream page/PDF changes — they never kill the ETL.
 *   **Climate** - `open_api` (Open-Meteo Archive + NASA POWER, daily, 1981-present) - no scraping needed. Fetch by `admin1` centroid, stored as `climate_daily`/`climate_monthly`.
 
 **Platform reliability (Phase 1):**
@@ -312,24 +312,24 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 
 - [x] Commons foundation: `core/registry` + `core/fetch` (open_api / html_scrape / pdf_extract)
 - [x] Markets dataset (WFP, 27k obs, 486 markets) + API + dashboard
-- [x] Economy dataset (World Bank + RBZ/ZERA/ZIMSTAT scrapers) + `/v1/economy/*`
+- [x] Economy dataset (World Bank + central bank/regulator scrapers) + `/v1/economy/*`
 - [x] Climate dataset (Open-Meteo/NASA POWER, daily 1981-present) + `/v1/climate/*`
-- [x] Demographics (WDI + ZIMSTAT 2022 Census) + `/v1/demographics/*`
-- [x] Agriculture (WDI + FAO FAOSTAT + Agritex scrape) + `/v1/agriculture/*`
-- [x] Health (WDI + MoHCC scrape) + `/v1/health-stats/*`
-- [x] Education (WDI + MoPSE scrape) + `/v1/education/*`
-- [x] Energy (WDI + ZESA/ZERA scrape) + `/v1/energy/*`
-- [x] Water (WDI + ZINWA scrape) + `/v1/water/*`
-- [x] Transport (WDI + MoT scrape) + `/v1/transport/*`
-- [x] Mining (WDI + Chamber/RBZ scrape) + `/v1/mining/*`
-- [x] Governance (WDI CPIA + ZEC/Afrobarometer scrape) + `/v1/governance/*`
-- [x] Trade (WDI + ZimTrade/ZIMSTAT scrape) + `/v1/trade/*`
-- [x] Labour (WDI + ILO/LFCLS scrape) + `/v1/labour/*`
-- [x] Environment (WDI + EMA scrape) + `/v1/environment/*`
-- [x] Poverty (WDI + PICES scrape) + `/v1/poverty/*`
-- [x] ICT (WDI + POTRAZ scrape) + `/v1/ict/*`
-- [x] Finance (WDI + RBZ scrape) + `/v1/finance/*`
-- [x] Tourism (WDI + ZTA scrape) + `/v1/tourism/*`
+- [x] Demographics (WDI + census) + `/v1/demographics/*`
+- [x] Agriculture (WDI + FAO FAOSTAT + agritex scrape) + `/v1/agriculture/*`
+- [x] Health (WDI + health ministry scrape) + `/v1/health-stats/*`
+- [x] Education (WDI + education ministry scrape) + `/v1/education/*`
+- [x] Energy (WDI + utility regulator scrape) + `/v1/energy/*`
+- [x] Water (WDI + water authority scrape) + `/v1/water/*`
+- [x] Transport (WDI + transport ministry scrape) + `/v1/transport/*`
+- [x] Mining (WDI + mining chamber scrape) + `/v1/mining/*`
+- [x] Governance (WDI CPIA + electoral commission scrape) + `/v1/governance/*`
+- [x] Trade (WDI + trade authority scrape) + `/v1/trade/*`
+- [x] Labour (WDI + labour survey scrape) + `/v1/labour/*`
+- [x] Environment (WDI + environmental agency scrape) + `/v1/environment/*`
+- [x] Poverty (WDI + poverty survey scrape) + `/v1/poverty/*`
+- [x] ICT (WDI + telecom regulator scrape) + `/v1/ict/*`
+- [x] Finance (WDI + central bank scrape) + `/v1/finance/*`
+- [x] Tourism (WDI + tourism authority scrape) + `/v1/tourism/*`
 - [x] Aid (WDI + OECD scrape) + `/v1/aid/*`
 - [x] Gender (WDI + UN Women scrape) + `/v1/gender/*`
 - [x] Geospatial (HDX COD-AB + markets GeoJSON) + `/v1/geospatial/*`
