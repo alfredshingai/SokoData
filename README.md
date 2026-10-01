@@ -347,6 +347,23 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [ ] Seasonal baselines + harvest-cycle forecasting (ML) linking markets ↔ climate ↔ economy ↔ agriculture
 - [ ] Digital Public Goods (DPG) submission as a commons
 
+## Digital Public Goods Compliance
+
+SokoData is designed to meet [Digital Public Goods Standard](https://digitalpublicgoods.net/standard/) criteria:
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| **Open License** | ✅ | MIT License (OSI-approved) |
+| **Open Data** | ✅ | All 22+ datasets from open sources (WFP HDX CC-BY-IGO, World Bank, Open-Meteo, NASA POWER, FAO, UN, HDX COD-AB) |
+| **Open Standards** | ✅ | OpenAPI 3.1, JSON, CSV, Parquet, GeoJSON; REST + streaming endpoints |
+| **Open Source** | ✅ | Full source on GitHub, reproducible builds |
+| **Platform Independence** | ✅ | Python 3.12+, runs on Linux/macOS/Windows, Docker-ready |
+| **Documentation** | ✅ | README, interactive API docs (`/docs`), dataset catalog (`/v1/catalog`) |
+| **Community** | ✅ | CONTRIBUTING.md, CODE_OF_CONDUCT.md, GOVERNANCE.md, SECURITY.md |
+| **Privacy & Safety** | ✅ | No PII collected; API keys hashed; rate limits; security policy |
+
+**Relevant SDGs**: 2 (Zero Hunger), 8 (Decent Work), 9 (Industry/Innovation), 10 (Reduced Inequalities), 12 (Responsible Consumption), 13 (Climate Action), 17 (Partnerships).
+
 ## Development
 
 ```bash
