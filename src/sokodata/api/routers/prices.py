@@ -5,12 +5,14 @@ from datetime import date as Date
 from fastapi import APIRouter, HTTPException, Query, Request
 
 from sokodata.api.schemas import PricePoint
+from sokodata.config import resolve_iso3
 
 router = APIRouter(tags=["prices"])
 
 SELECT_PRICE = """
-    SELECT p.date, p.market_id, m.market, m.admin1, m.country, p.commodity_id, p.commodity,
-           p.unit, p.priceflag, p.pricetype, p.currency, p.price, p.usdprice
+    SELECT p.date, p.market_id, m.market, m.admin1, m.country, m.countryiso3,
+           p.commodity_id, p.commodity, p.unit, p.priceflag, p.pricetype, p.currency,
+           p.price, p.usdprice
     FROM prices p JOIN markets m ON m.market_id = p.market_id
 """
 
@@ -43,8 +45,9 @@ def price_series(
     """Price observations, oldest first. Combine filters as needed."""
     clauses, params = [], []
     if country:
-        clauses.append("p.country = ?")
-        params.append(country.upper())
+        # country lives on markets, not prices; ISO3 is the warehouse column
+        clauses.append("m.countryiso3 = ?")
+        params.append(resolve_iso3(country))
     if market_id is not None:
         _require_market(request.app.state.conn, market_id)
         clauses.append("p.market_id = ?")
@@ -86,7 +89,7 @@ def latest_prices(
     """Most recent observation per market (per commodity when unspecified)."""
     df = request.app.state.prices
     if country:
-        df = df[df["country"] == country.upper()]
+        df = df[df["countryiso3"] == resolve_iso3(country)]
     if commodity_id is not None:
         _require_commodity(df, commodity_id)
     if market_id is not None:

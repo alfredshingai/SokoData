@@ -61,7 +61,7 @@ log = logging.getLogger(__name__)
 def load_prices_frame(conn) -> pd.DataFrame:
     """Load the full prices table into pandas for in-memory analytics."""
     query = """
-        SELECT p.date, p.market_id, m.market, p.commodity_id, p.commodity,
+        SELECT p.date, p.market_id, m.market, m.countryiso3, p.commodity_id, p.commodity,
                p.category, p.unit, p.priceflag, p.pricetype, p.currency,
                p.price, p.usdprice
         FROM prices p JOIN markets m ON m.market_id = p.market_id

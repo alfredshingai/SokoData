@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Query, Request
 
 from sokodata.api.schemas import Market
+from sokodata.config import resolve_iso3
 
 router = APIRouter(tags=["markets"])
 
@@ -25,18 +26,9 @@ def list_markets(
     )
     params = []
     if country:
-        # Accept ISO2 (ZW) or ISO3 (ZWE); the warehouse stores ISO3 in countryiso3
-        # while `country` holds the full name, so filter on the ISO3 column.
-        code = country.upper()
-        if len(code) == 2:
-            from sokodata.config import get_country_config
-
-            try:
-                code = get_country_config(code)["iso3"]
-            except ValueError:
-                pass
+        # The warehouse stores ISO3 in countryiso3; `country` holds the full name.
         sql += " WHERE countryiso3 = ?"
-        params.append(code)
+        params.append(resolve_iso3(country))
     sql += " ORDER BY market LIMIT ? OFFSET ?"
     params.extend([limit, offset])
     rows = request.app.state.conn.execute(sql, params).fetchall()

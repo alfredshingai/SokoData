@@ -427,6 +427,14 @@ def get_wb_country(country: str = DEFAULT_COUNTRY) -> str:
     return get_country_config(country)["wb_country"]
 
 
+def resolve_iso3(country: str) -> str:
+    """Normalize ISO2 (ZW) or ISO3 (ZWE) input to the ISO3 used in the warehouse."""
+    code = str(country).strip().upper()
+    if len(code) == 2:
+        return get_country_config(code)["iso3"]
+    return code
+
+
 # Attribution required by CC BY-IGO; surfaced in /health and the README.
 DATA_CREDIT = {
     "source": "World Food Programme Price Database, via HDX (OCHA)",
