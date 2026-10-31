@@ -13,10 +13,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from fastapi import Depends, Header, HTTPException, Request
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader
-
-from sokodata.datasets.markets.store import connect as db_connect
 
 log = logging.getLogger(__name__)
 
@@ -35,9 +33,9 @@ CREATE INDEX IF NOT EXISTS idx_keys_hash ON api_keys(key_hash);
 
 # Tier limits: (req_per_min, req_per_day)
 TIER_LIMITS = {
-    0: (60, 1000),       # Anonymous
-    1: (300, 10000),     # API Key
-    2: (1000, 100000),   # Premium
+    0: (60, 1000),  # Anonymous
+    1: (300, 10000),  # API Key
+    2: (1000, 100000),  # Premium
 }
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -53,6 +51,7 @@ class AuthContext:
 
 # Configurable database path
 _auth_db_path = "data/sokodata.db"
+
 
 def set_auth_db_path(path: str) -> None:
     global _auth_db_path
@@ -77,13 +76,14 @@ def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
-def create_api_key(name: str = "", tier: int = 1, db_path: Path | str | None = None) -> tuple[str, str]:
+def create_api_key(
+    name: str = "", tier: int = 1, db_path: Path | str | None = None
+) -> tuple[str, str]:
     """Create a new API key. Returns (key_id, raw_key)."""
     path = db_path or _auth_db_path
     raw_key = f"sk_{secrets.token_urlsafe(32)}"
     key_hash = hash_key(raw_key)
     key_id = secrets.token_urlsafe(16)
-    now = time.time()
     conn = sqlite3.connect(path)
     try:
         conn.execute(
@@ -159,9 +159,6 @@ async def get_auth_context(
     request: Request,
     api_key: str | None = Depends(api_key_header),
 ) -> AuthContext:
-    from sokodata.core.auth import _get_db_path
-    db_path = _get_db_path()
-
     if api_key:
         verified = verify_api_key(api_key)
         if verified:
@@ -188,12 +185,12 @@ async def get_auth_context(
     )
 
 
-from functools import wraps
-
 def require_tier(min_tier: int):
     """Dependency to require minimum tier."""
+
     async def checker(ctx: AuthContext = Depends(get_auth_context)) -> AuthContext:
         if ctx.tier < min_tier:
             raise HTTPException(status_code=403, detail=f"Requires tier {min_tier}+")
         return ctx
+
     return checker

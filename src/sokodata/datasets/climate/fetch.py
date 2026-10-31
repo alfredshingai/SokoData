@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from sokodata.config import RAW_DIR
 from sokodata.core.fetch import fetch_json
 
 log = logging.getLogger(__name__)
@@ -50,7 +49,7 @@ CENTROIDS = {
         "Kilifi": (-3.6305, 39.8499),
         "Kiambu": (-1.1699, 36.8331),
         "Kajiado": (-1.8500, 36.7833),
-        "Uasin Gishu": (0.5000, 35.3000),
+        "Uasin Gishu": (0.5143, 35.2698),
         "Trans-Nzoia": (1.0000, 35.0000),
         "Bungoma": (0.5667, 34.5667),
         "Kericho": (-0.3667, 35.2833),
@@ -61,60 +60,24 @@ CENTROIDS = {
         "Siaya": (0.0667, 34.2833),
         "Busia": (0.4667, 34.1167),
         "Vihiga": (0.0500, 34.7333),
-        "Kakamega": (0.2827, 34.7519),
         "Bomet": (-0.7833, 35.3333),
         "Narok": (-1.0833, 35.8667),
-        "Kajiado": (-1.8500, 36.7833),
         "Laikipia": (0.1333, 36.8000),
         "Samburu": (1.1000, 36.7333),
         "Marsabit": (2.3333, 37.9833),
         "Isiolo": (0.3500, 37.5833),
-        "Meru": (0.0463, 37.6558),
         "Tharaka-Nithi": (0.0000, 37.9333),
         "Embu": (-0.5333, 37.4500),
         "Kitui": (-1.3667, 38.0167),
-        "Machakos": (-1.5177, 37.2634),
         "Makueni": (-1.8000, 37.6167),
         "Nyandarua": (-0.1667, 36.3667),
-        "Nyeri": (-0.4201, 36.9476),
         "Kirinyaga": (-0.5000, 37.2833),
         "Murang'a": (-0.7167, 37.1500),
-        "Kiambu": (-1.1699, 36.8331),
         "Turkana": (3.1167, 35.6000),
         "West Pokot": (1.2500, 35.1167),
         "Elgeyo-Marakwet": (0.5000, 35.5000),
         "Nandi": (0.2000, 35.1167),
         "Baringo": (0.5000, 36.0000),
-        "Laikipia": (0.1333, 36.8000),
-        "Nakuru": (-0.3031, 36.0800),
-        "Narok": (-1.0833, 35.8667),
-        "Kajiado": (-1.8500, 36.7833),
-        "Kericho": (-0.3667, 35.2833),
-        "Bomet": (-0.7833, 35.3333),
-        "Trans-Nzoia": (1.0000, 35.0000),
-        "Uasin Gishu": (0.5143, 35.2698),
-        "West Pokot": (1.2500, 35.1167),
-        "Elgeyo-Marakwet": (0.5000, 35.5000),
-        "Nandi": (0.2000, 35.1167),
-        "Baringo": (0.5000, 36.0000),
-        "Laikipia": (0.1333, 36.8000),
-        "Nakuru": (-0.3031, 36.0800),
-        "Narok": (-1.0833, 35.8667),
-        "Kajiado": (-1.8500, 36.7833),
-        "Kericho": (-0.3667, 35.2833),
-        "Bomet": (-0.7833, 35.3333),
-        "Trans-Nzoia": (1.0000, 35.0000),
-        "Uasin Gishu": (0.5143, 35.2698),
-        "West Pokot": (1.2500, 35.1167),
-        "Elgeyo-Marakwet": (0.5000, 35.5000),
-        "Nandi": (0.2000, 35.1167),
-        "Baringo": (0.5000, 36.0000),
-        "Laikipia": (0.1333, 36.8000),
-        "Nakuru": (-0.3031, 36.0800),
-        "Narok": (-1.0833, 35.8667),
-        "Kajiado": (-1.8500, 36.7833),
-        "Kericho": (-0.3667, 35.2833),
-        "Bomet": (-0.7833, 35.3333),
     },
 }
 
@@ -156,12 +119,23 @@ def fetch_openmeteo_daily(
                 }
             )
         df = pd.DataFrame(rows)
-        log.info("open-meteo %s,%s: %d days %s->%s", latitude, longitude, len(df), start_date, end_date)
+        log.info(
+            "open-meteo %s,%s: %d days %s->%s", latitude, longitude, len(df), start_date, end_date
+        )
         return df
     except Exception as e:
         log.warning("open-meteo fetch failed for %s,%s: %s", latitude, longitude, e)
         return pd.DataFrame(
-            columns=["date", "latitude", "longitude", "tmean_c", "tmax_c", "tmin_c", "precip_mm", "source"]
+            columns=[
+                "date",
+                "latitude",
+                "longitude",
+                "tmean_c",
+                "tmax_c",
+                "tmin_c",
+                "precip_mm",
+                "source",
+            ]
         )
 
 
@@ -193,7 +167,17 @@ def fetch_climate_all(
 
     if not frames:
         return pd.DataFrame(
-            columns=["date", "admin1", "latitude", "longitude", "tmean_c", "tmax_c", "tmin_c", "precip_mm", "source"]
+            columns=[
+                "date",
+                "admin1",
+                "latitude",
+                "longitude",
+                "tmean_c",
+                "tmax_c",
+                "tmin_c",
+                "precip_mm",
+                "source",
+            ]
         )
     out = pd.concat(frames, ignore_index=True)
     log.info("climate all: %d rows for %d locations in %s", len(out), len(targets), country)

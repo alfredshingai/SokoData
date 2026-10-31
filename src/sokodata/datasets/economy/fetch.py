@@ -9,12 +9,20 @@ where there's an API, use it":
 
 import logging
 import time
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
 
 from sokodata.config import RAW_DIR, get_wb_country
-from sokodata.core.fetch import download_pdf, extract_pdf_tables, fetch_html_tables, fetch_html_text, fetch_json, parse_fuel_text
+from sokodata.core.fetch import (
+    download_pdf,
+    extract_pdf_tables,
+    fetch_html_tables,
+    fetch_html_text,
+    fetch_json,
+    parse_fuel_text,
+)
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +42,13 @@ def _fetch_wdi_indicator(indicator: str, country: str) -> pd.DataFrame:
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", "value": float(r["value"]), "source": f"WDI {indicator} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    "value": float(r["value"]),
+                    "source": f"WDI {indicator} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -86,7 +100,9 @@ def _scrape_rbz_rates_with_retry(max_attempts: int = 3) -> pd.DataFrame:
                             except Exception:
                                 pass
                     if date_candidate and rate_candidate:
-                        rows.append({"date": date_candidate, "rate": rate_candidate, "source": "RBZ scrape"})
+                        rows.append(
+                            {"date": date_candidate, "rate": rate_candidate, "source": "RBZ scrape"}
+                        )
             if rows:
                 df = pd.DataFrame(rows)
                 df["date"] = pd.to_datetime(df["date"], errors="coerce")
@@ -96,8 +112,15 @@ def _scrape_rbz_rates_with_retry(max_attempts: int = 3) -> pd.DataFrame:
             html = fetch_html_text(RBZ_RATES_URL)
             if html:
                 import re
+
                 for m in re.finditer(r"ZiG[^\d]*(\d+\.?\d*)\s*(?:per\s*)?USD", html, re.I):
-                    rows.append({"date": str(date.today()), "rate": float(m.group(1)), "source": "RBZ regex"})
+                    rows.append(
+                        {
+                            "date": str(date.today()),
+                            "rate": float(m.group(1)),
+                            "source": "RBZ regex",
+                        }
+                    )
             if rows:
                 df = pd.DataFrame(rows)
                 df["date"] = pd.to_datetime(df["date"], errors="coerce")
@@ -107,7 +130,7 @@ def _scrape_rbz_rates_with_retry(max_attempts: int = 3) -> pd.DataFrame:
         except Exception as e:
             log.warning("RBZ scrape attempt %d/%d failed: %s", attempt, max_attempts, e)
             if attempt < max_attempts:
-                time.sleep(2 ** attempt)  # exponential backoff
+                time.sleep(2**attempt)  # exponential backoff
     return pd.DataFrame()
 
 
@@ -128,15 +151,19 @@ def _scrape_zera_fuel_with_retry(max_attempts: int = 3) -> pd.DataFrame:
                             if "diesel" in vl or "petrol" in vl:
                                 for nv in vals[i + 1 :]:
                                     try:
-                                        price = float(str(nv).replace(",", "").replace("$", "").strip())
+                                        price = float(
+                                            str(nv).replace(",", "").replace("$", "").strip()
+                                        )
                                         if 0.5 < price < 10:
-                                            rows.append({
-                                                "date": str(date.today()),
-                                                "fuel_type": v.strip(),
-                                                "price": price,
-                                                "currency": "USD",
-                                                "source": "ZERA HTML table",
-                                            })
+                                            rows.append(
+                                                {
+                                                    "date": str(date.today()),
+                                                    "fuel_type": v.strip(),
+                                                    "price": price,
+                                                    "currency": "USD",
+                                                    "source": "ZERA HTML table",
+                                                }
+                                            )
                                             break
                                     except Exception:
                                         continue
@@ -144,13 +171,15 @@ def _scrape_zera_fuel_with_retry(max_attempts: int = 3) -> pd.DataFrame:
                 html = fetch_html_text(ZERA_FUEL_URL)
                 if html:
                     for item in parse_fuel_text(html):
-                        rows.append({
-                            "date": str(date.today()),
-                            "fuel_type": item["fuel"],
-                            "price": item["price"],
-                            "currency": "USD",
-                            "source": "ZERA HTML regex",
-                        })
+                        rows.append(
+                            {
+                                "date": str(date.today()),
+                                "fuel_type": item["fuel"],
+                                "price": item["price"],
+                                "currency": "USD",
+                                "source": "ZERA HTML regex",
+                            }
+                        )
             if not rows:
                 try:
                     pdf_path = RAW_DIR / "zera_fuel.pdf"
@@ -168,7 +197,7 @@ def _scrape_zera_fuel_with_retry(max_attempts: int = 3) -> pd.DataFrame:
         except Exception as e:
             log.warning("ZERA scrape attempt %d/%d failed: %s", attempt, max_attempts, e)
             if attempt < max_attempts:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
     return pd.DataFrame()
 
 
@@ -177,7 +206,10 @@ def _scrape_zimstat_cpi_with_retry(max_attempts: int = 3) -> pd.DataFrame:
     for attempt in range(1, max_attempts + 1):
         try:
             pdf_path = RAW_DIR / "zimstat_cpi.pdf"
-            download_pdf("https://www.zimstat.co.zw/wp-content/uploads/publications/Economic/Price/CPI.pdf", pdf_path)
+            download_pdf(
+                "https://www.zimstat.co.zw/wp-content/uploads/publications/Economic/Price/CPI.pdf",
+                pdf_path,
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-3")
             rows = []
             for tbl in tables:
@@ -191,7 +223,7 @@ def _scrape_zimstat_cpi_with_retry(max_attempts: int = 3) -> pd.DataFrame:
         except Exception as e:
             log.warning("ZIMSTAT PDF attempt %d/%d failed: %s", attempt, max_attempts, e)
             if attempt < max_attempts:
-                time.sleep(2 ** attempt)
+                time.sleep(2**attempt)
     return pd.DataFrame(columns=["date", "cpi", "inflation_yoy", "inflation_mom", "source"])
 
 
@@ -201,7 +233,6 @@ def fetch_economy_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[
     For Zimbabwe: WDI + RBZ/ZERA/ZIMSTAT scrapers with retries
     For other countries: WDI only (scrapers can be added per-country)
     """
-    base = raw_dir or RAW_DIR
     cpi_wdi = fetch_worldbank_cpi(country)
 
     # Zimbabwe-specific scrapers with retries

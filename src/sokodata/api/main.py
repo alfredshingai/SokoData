@@ -16,14 +16,42 @@ from fastapi.responses import RedirectResponse
 
 from sokodata import __version__
 from sokodata.api.routers import (
-    agriculture, aid, auth, catalog, climate, commodities, demographics, economy,
-    education, energy, environment, export, finance, gender, geospatial, governance,
-    health as health_router, ict, insights, labour, markets, meta, mining, poverty,
-    prices, tourism, trade, transport, water, webhooks, whatsapp_router,
+    agriculture,
+    aid,
     analyze,
+    auth,
+    catalog,
+    climate,
+    commodities,
+    demographics,
+    economy,
+    education,
+    energy,
+    environment,
+    export,
+    finance,
+    gender,
+    geospatial,
+    governance,
+    ict,
+    indicators,
+    insights,
+    labour,
+    markets,
+    meta,
+    mining,
+    poverty,
+    prices,
+    tourism,
+    trade,
+    transport,
+    water,
+    webhooks,
+    whatsapp_router,
 )
-from sokodata.api.routers.indicators import router as indicators
-from sokodata.api.routers.analyze import router as analyze_router
+from sokodata.api.routers import (
+    health as health_router,
+)
 from sokodata.config import DATA_CREDIT, DB_PATH
 from sokodata.datasets.markets.store import connect
 
@@ -89,7 +117,17 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
         from sokodata.api.schemas import Health
         from sokodata.datasets.markets.analysis.seasonal import coverage
 
-        cov = coverage(app.state.prices) if app.state.prices is not None and not app.state.prices.empty else {"observations": 0, "markets": 0, "commodities": 0, "first_date": None, "last_date": None}
+        cov = (
+            coverage(app.state.prices)
+            if app.state.prices is not None and not app.state.prices.empty
+            else {
+                "observations": 0,
+                "markets": 0,
+                "commodities": 0,
+                "first_date": None,
+                "last_date": None,
+            }
+        )
         return Health(
             status="ok" if app.state.prices is not None else "empty",
             version=__version__,
@@ -127,7 +165,7 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
     app.include_router(auth, prefix="/v1")
     app.include_router(export, prefix="/v1")
     app.include_router(indicators, prefix="/v1")
-    app.include_router(analyze_router, prefix="/v1")
+    app.include_router(analyze, prefix="/v1")
     app.include_router(whatsapp_router)
     app.include_router(webhooks)
     return app

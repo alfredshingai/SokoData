@@ -6,15 +6,12 @@ Supports multiple channels: HTTP webhook, Telegram, Slack, Email (via webhook).
 import json
 import logging
 import sqlite3
-import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
-
-from sokodata.datasets.markets.store import connect as db_connect
 
 log = logging.getLogger(__name__)
 
@@ -36,12 +33,12 @@ CREATE INDEX IF NOT EXISTS idx_webhooks_enabled ON webhook_subscriptions(enabled
 """
 
 WEBHOOK_EVENTS = {
-    "price_spike",      # price spike detected
-    "price_drop",       # significant price drop
-    "anomaly_detected", # statistical anomaly
-    "new_data",         # new data available
-    "etl_complete",     # ETL pipeline completed
-    "etl_failed",       # ETL pipeline failed
+    "price_spike",  # price spike detected
+    "price_drop",  # significant price drop
+    "anomaly_detected",  # statistical anomaly
+    "new_data",  # new data available
+    "etl_complete",  # ETL pipeline completed
+    "etl_failed",  # ETL pipeline failed
 }
 
 
@@ -78,15 +75,23 @@ def create_webhook_subscription(
 ) -> str:
     """Create a new webhook subscription."""
     import secrets
+
     webhook_id = secrets.token_urlsafe(16)
-    now = datetime.utcnow().isoformat()
     conn = sqlite3.connect(db_path)
     try:
         conn.execute(
-            """INSERT INTO webhook_subscriptions 
+            """INSERT INTO webhook_subscriptions
                (id, user_id, channel, target, events, secret, enabled, created_at)
                VALUES (?, ?, ?, ?, ?, ?, 1, ?)""",
-            (webhook_id, user_id, channel, target, json.dumps(events), secret, datetime.utcnow().isoformat()),
+            (
+                webhook_id,
+                user_id,
+                channel,
+                target,
+                json.dumps(events),
+                secret,
+                datetime.utcnow().isoformat(),
+            ),
         )
         conn.commit()
     finally:
@@ -141,15 +146,20 @@ async def send_webhook(
 
     headers = {"Content-Type": "application/json"}
     if webhook.secret:
-        import hmac
         import hashlib
-        sig = hmac.new(webhook.secret.encode(), json.dumps(payload_with_meta).encode(), hashlib.sha256).hexdigest()
+        import hmac
+
+        sig = hmac.new(
+            webhook.secret.encode(), json.dumps(payload_with_meta).encode(), hashlib.sha256
+        ).hexdigest()
         headers["X-Webhook-Signature"] = f"sha256={sig}"
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             if webhook.channel == "http":
-                response = await client.post(webhook.target, json=payload_with_meta, headers=headers)
+                response = await client.post(
+                    webhook.target, json=payload_with_meta, headers=headers
+                )
                 response.raise_for_status()
             elif webhook.channel == "telegram":
                 # Telegram Bot API
@@ -161,10 +171,20 @@ async def send_webhook(
                 )
             elif webhook.channel == "slack":
                 # Slack webhook
-                await client.post(webhook.target, json={"text": f"*{event}*\n```{json.dumps(payload, indent=2)[:3000]}```"})
+                await client.post(
+                    webhook.target,
+                    json={"text": f"*{event}*\n```{json.dumps(payload, indent=2)[:3000]}```"},
+                )
             elif webhook.channel == "email":
                 # Email via webhook (e.g., SendGrid, Mailgun)
-                await client.post(webhook.target, json={"to": webhook.target, "subject": f"SokoData Alert: {event}", "text": json.dumps(payload, indent=2)})
+                await client.post(
+                    webhook.target,
+                    json={
+                        "to": webhook.target,
+                        "subject": f"SokoData Alert: {event}",
+                        "text": json.dumps(payload, indent=2),
+                    },
+                )
             else:
                 log.warning("Unknown webhook channel: %s", webhook.channel)
                 return False

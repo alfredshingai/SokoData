@@ -54,6 +54,7 @@ select = ["E", "F", "I", "W", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 # FastAPI's Query()/Path() in defaults is the framework's idiom, not a bug.
 "src/sokodata/api/routers/*" = ["B008"]
+"src/sokodata/core/auth.py" = ["B008"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

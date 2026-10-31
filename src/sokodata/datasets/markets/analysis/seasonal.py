@@ -185,26 +185,28 @@ def get_crop_calendar(crop: str, region: str = "southern_africa") -> dict:
     return crop_cal.get(region, {"planting": [], "harvest": []})
 
 
-def add_crop_calendar_features(df: pd.DataFrame, date_col: str = "date", region: str = "southern_africa") -> pd.DataFrame:
+def add_crop_calendar_features(
+    df: pd.DataFrame, date_col: str = "date", region: str = "southern_africa"
+) -> pd.DataFrame:
     """Add crop calendar features to a DataFrame."""
     df = df.copy()
     df[date_col] = pd.to_datetime(df[date_col])
     df["month"] = df[date_col].dt.month
     df["day_of_year"] = df[date_col].dt.dayofyear
     df["week_of_year"] = df[date_col].dt.isocalendar().week
-    
+
     # Add crop calendar features for major crops
     for crop in ["maize", "wheat", "rice", "sorghum", "millet"]:
         cal = get_crop_calendar(crop)
         planting_months = set(cal.get("planting", []))
         harvest_months = set(cal.get("harvest", []))
-        
+
         df[f"{crop}_planting_season"] = df["month"].isin(planting_months).astype(int)
         df[f"{crop}_harvest_season"] = df["month"].isin(harvest_months).astype(int)
         df[f"{crop}_growing_season"] = (
             df["month"].isin(planting_months) | df["month"].isin(harvest_months)
         ).astype(int)
-    
+
     return df
 
 
@@ -212,24 +214,32 @@ def prepare_ml_features(
     df: pd.DataFrame,
     target_col: str,
     date_col: str = "date",
-    lags: list[int] = [1, 7, 14, 30],
-    rolling_windows: list[int] = [7, 14, 30, 60],
+    lags: tuple[int, ...] = (1, 7, 14, 30),
+    rolling_windows: tuple[int, ...] = (7, 14, 30, 60),
 ) -> tuple[pd.DataFrame, pd.Series]:
     """Prepare ML features for time series forecasting."""
     df = df.copy()
     df = df.sort_values("date")
-    
+
     # Lag features
     for lag in lags:
         df[f"{target_col}_lag_{lag}"] = df[target_col].shift(lag)
-    
+
     # Rolling statistics
     for window in rolling_windows:
-        df[f"{target_col}_rolling_mean_{window}"] = df[target_col].rolling(window=window, min_periods=1).mean()
-        df[f"{target_col}_rolling_std_{window}"] = df[target_col].rolling(window=window, min_periods=1).std()
-        df[f"{target_col}_rolling_min_{window}"] = df[target_col].rolling(window=window, min_periods=1).min()
-        df[f"{target_col}_rolling_max_{window}"] = df[target_col].rolling(window=window, min_periods=1).max()
-    
+        df[f"{target_col}_rolling_mean_{window}"] = (
+            df[target_col].rolling(window=window, min_periods=1).mean()
+        )
+        df[f"{target_col}_rolling_std_{window}"] = (
+            df[target_col].rolling(window=window, min_periods=1).std()
+        )
+        df[f"{target_col}_rolling_min_{window}"] = (
+            df[target_col].rolling(window=window, min_periods=1).min()
+        )
+        df[f"{target_col}_rolling_max_{window}"] = (
+            df[target_col].rolling(window=window, min_periods=1).max()
+        )
+
     # Date features
     df["date"] = pd.to_datetime(df["date"])
     df["day_of_year"] = df["date"].dt.dayofyear
@@ -241,29 +251,21 @@ def prepare_ml_features(
     df["is_month_end"] = df["date"].dt.is_month_end.astype(int)
     df["is_quarter_start"] = df["date"].dt.is_quarter_start.astype(int)
     df["is_quarter_end"] = df["date"].dt.is_quarter_end.astype(int)
-    
+
     # Cyclical encoding for seasonal features
     df["month_sin"] = np.sin(2 * np.pi * df["month"] / 12)
     df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
     df["day_of_year_sin"] = np.sin(2 * np.pi * df["day_of_year"] / 365)
     df["day_of_year_cos"] = np.cos(2 * np.pi * df["day_of_year"] / 365)
-    
-    # Target
-    y = df[target_col]
-    
+
     # Drop NaN rows
     feature_cols = [c for c in df.columns if c not in [target_col, "date"]]
     df_clean = df.dropna(subset=[target_col] + feature_cols)
-    
+
     return df_clean[feature_cols], df_clean[target_col]
 
 
-def train_ml_model(
-    X: pd.DataFrame,
-    y: pd.Series,
-    model_type: str = "rf",
-    **kwargs
-):
+def train_ml_model(X: pd.DataFrame, y: pd.Series, model_type: str = "rf", **kwargs):
     """Train ML model for forecasting."""
     if model_type == "rf":
         model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1, **kwargs)
@@ -271,7 +273,7 @@ def train_ml_model(
         model = LinearRegression(**kwargs)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
-    
+
     # Scale features for linear regression
     scaler = None
     if model_type == "lr":
@@ -285,44 +287,47 @@ def train_ml_model(
 
 
 def forecast_with_ml(
-    df: pd.DataFrame,
-    target_col: str,
-    horizon: int = 30,
-    model_type: str = "rf",
-    **kwargs
+    df: pd.DataFrame, target_col: str, horizon: int = 30, model_type: str = "rf", **kwargs
 ) -> dict:
     """Train ML model and forecast future values."""
     from sokodata.datasets.markets.analysis.seasonal import seasonal_baseline
-    
+
     # First get seasonal baseline
     baseline_result = seasonal_baseline(df, target_col, periods=365)
     if "error" in baseline_result:
         return {"error": "Insufficient data for forecasting"}
-    
+
     # Prepare ML features
     X, y = prepare_ml_features(df, target_col)
-    
+
     # Train ML model
     model, scaler = train_ml_model(X, y, model_type=model_type)
-    
+
     # Generate future features for forecasting
-    last_date = df["date"].max()
-    future_dates = pd.date_range(start=df["date"].max() + pd.Timedelta(days=1), periods=horizon, freq='D')
-    
+    future_dates = pd.date_range(
+        start=df["date"].max() + pd.Timedelta(days=1), periods=horizon, freq="D"
+    )
+
     # Create future feature dataframe
     future_df = pd.DataFrame({"date": future_dates})
     future_df = add_crop_calendar_features(future_df, "date")
-    
+
     # Add lag/rolling features using last known values
     last_values = df[target_col].tail(60).values
     for lag in [1, 7, 14, 30]:
-        future_df[f"lag_{lag}"] = np.roll(np.append(last_values, np.nan * np.ones(horizon)), lag)[-horizon:]
-    
+        future_df[f"lag_{lag}"] = np.roll(np.append(last_values, np.nan * np.ones(horizon)), lag)[
+            -horizon:
+        ]
+
     # Add rolling features (use last known values)
     for window in [7, 14, 30, 60]:
-        future_df[f"rolling_mean_{window}"] = np.mean(last_values[-window:]) if len(last_values) >= window else np.nan
-        future_df[f"rolling_std_{window}"] = np.std(last_values[-window:]) if len(last_values) >= window else np.nan
-    
+        future_df[f"rolling_mean_{window}"] = (
+            np.mean(last_values[-window:]) if len(last_values) >= window else np.nan
+        )
+        future_df[f"rolling_std_{window}"] = (
+            np.std(last_values[-window:]) if len(last_values) >= window else np.nan
+        )
+
     # Add date features
     future_df["date"] = pd.to_datetime(future_df["date"])
     future_df["day_of_year"] = future_df["date"].dt.dayofyear
@@ -334,38 +339,44 @@ def forecast_with_ml(
     future_df["month_cos"] = np.cos(2 * np.pi * future_df["month"] / 12)
     future_df["day_of_year_sin"] = np.sin(2 * np.pi * future_df["day_of_year"] / 365)
     future_df["day_of_year_cos"] = np.cos(2 * np.pi * future_df["day_of_year"] / 365)
-    
+
     # Add crop calendar features
     future_df = add_crop_calendar_features(future_df, "date")
-    
+
     # Prepare features for prediction
     feature_cols = [c for c in X.columns if c in future_df.columns]
     X_future = future_df[feature_cols]
-    
+
     # Scale if needed
     if scaler:
         X_future = scaler.transform(X_future)
     else:
         X_future = X_future.values
-    
+
     # Predict
     predictions = model.predict(X_future)
-    
+
     # Combine with seasonal baseline
     baseline_result = seasonal_baseline(
-        pd.DataFrame({"date": pd.date_range(end=pd.Timestamp.now(), periods=365, freq='D'), "value": np.nan}),
+        pd.DataFrame(
+            {"date": pd.date_range(end=pd.Timestamp.now(), periods=365, freq="D"), "value": np.nan}
+        ),
         "value",
-        periods=365
+        periods=365,
     )
-    seasonal_baseline = np.interp(
-        np.arange(horizon),
-        np.linspace(0, 1, len(baseline_result["forecast"])),
-        baseline_result["forecast"][:horizon]
-    ) if "forecast" in baseline_result else np.zeros(horizon)
-    
+    seasonal_baseline = (
+        np.interp(
+            np.arange(horizon),
+            np.linspace(0, 1, len(baseline_result["forecast"])),
+            baseline_result["forecast"][:horizon],
+        )
+        if "forecast" in baseline_result
+        else np.zeros(horizon)
+    )
+
     # Combine ML predictions with seasonal baseline
     final_forecast = predictions + seasonal_baseline
-    
+
     return {
         "forecast": final_forecast.tolist(),
         "forecast_dates": [str(d) for d in future_dates],
@@ -397,75 +408,72 @@ def seasonal_baseline(
     n_harmonics: int = 3,
 ) -> dict:
     """Compute seasonal baseline using harmonic regression.
-    
+
     Fits a harmonic regression model to detect seasonal patterns.
     Returns baseline values and seasonal components.
-    
+
     Args:
         df: DataFrame with date and value columns
         value_col: Name of the value column
         date_col: Name of the date column (default: 'date')
         periods: Number of periods in a cycle (default: 365 for daily data)
         n_harmonics: Number of harmonics to fit (default: 3)
-    
+
     Returns:
         Dictionary with baseline values, seasonal components, and metadata
     """
     df = df.copy()
     df = df.sort_values(date_col)
-    
+
     # Create time index
     t = np.arange(len(df))
     y = df[value_col].values
     dates = df[date_col].values
-    
+
     # Remove NaN values
     mask = ~np.isnan(y)
     if mask.sum() < 10:
         return {"error": "Insufficient data points"}
-    
+
     t_clean = t[mask]
     y_clean = y[mask]
-    dates_clean = dates[mask]
-    
-    # Normalize time to [0, 2*pi] for one period
-    t_norm = 2 * np.pi * t_clean / periods
-    
+
     # Build design matrix with harmonics
     X = np.ones((len(y_clean), 1 + 2 * n_harmonics))
     for k in range(1, n_harmonics + 1):
-        X[:, 2*k - 1] = np.sin(k * 2 * np.pi * t_clean / periods)
-        X[:, 2*k] = np.cos(k * 2 * np.pi * t_clean / periods)
-    
+        X[:, 2 * k - 1] = np.sin(k * 2 * np.pi * t_clean / periods)
+        X[:, 2 * k] = np.cos(k * 2 * np.pi * t_clean / periods)
+
     # Fit linear regression
     coeffs, residuals, rank, s = np.linalg.lstsq(X, y_clean, rcond=None)
-    
+
     # Predict baseline
     baseline = X @ coeffs
     residuals = y_clean - baseline
-    
+
     # Seasonal component (without intercept)
     seasonal = baseline - coeffs[0]
-    
+
     # Forecast next period
     t_future = np.arange(len(df), len(df) + periods)
-    t_future_norm = 2 * np.pi * t_future / periods
-    
+
     X_future = np.ones((len(t_future), 1 + 2 * n_harmonics))
     for k in range(1, n_harmonics + 1):
-        X_future[:, 2*k - 1] = np.sin(k * 2 * np.pi * t_future / periods)
-        X_future[:, 2*k] = np.cos(k * 2 * np.pi * t_future / periods)
-    
+        X_future[:, 2 * k - 1] = np.sin(k * 2 * np.pi * t_future / periods)
+        X_future[:, 2 * k] = np.cos(k * 2 * np.pi * t_future / periods)
+
     forecast = X_future @ coeffs
-    
+
     return {
         "baseline": baseline.tolist(),
         "seasonal": seasonal.tolist(),
         "residuals": residuals.tolist(),
         "forecast": forecast.tolist(),
-        "forecast_dates": [str(d) for d in pd.date_range(dates[-1], periods=periods+1, freq='D')[1:]],
+        "forecast_dates": [
+            str(d) for d in pd.date_range(dates[-1], periods=periods + 1, freq="D")[1:]
+        ],
         "coefficients": coeffs.tolist(),
-        "r_squared": 1 - np.sum(residuals**2) / np.sum((y_clean - np.mean(y_clean))**2),
+        "r_squared": 1 - np.sum(residuals**2) / np.sum((y_clean - np.mean(y_clean)) ** 2),
         "n_observations": int(mask.sum()),
         "periods": periods,
         "n_harmonics": n_harmonics,

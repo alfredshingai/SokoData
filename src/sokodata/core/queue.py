@@ -6,14 +6,10 @@ Designed for scraper tasks: fetch_url, parse_html, extract_pdf.
 import json
 import logging
 import sqlite3
-import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
-
-from sokodata.datasets.markets.store import connect
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +28,8 @@ CREATE TABLE IF NOT EXISTS task_queue (
     error       TEXT,
     result      TEXT                    -- JSON result
 );
-CREATE INDEX IF NOT EXISTS idx_queue_status_priority ON task_queue(status, priority DESC, created_at);
+CREATE INDEX IF NOT EXISTS idx_queue_status_priority
+    ON task_queue(status, priority DESC, created_at);
 CREATE INDEX IF NOT EXISTS idx_queue_dead ON task_queue(status) WHERE status = 'dead';
 """
 
@@ -62,15 +59,23 @@ def init_queue(db_path: Path | str) -> None:
         conn.close()
 
 
-def enqueue(db_path: Path | str, task_type: str, payload: dict, priority: int = 0, max_attempts: int = 3) -> str:
+def enqueue(
+    db_path: Path | str, task_type: str, payload: dict, priority: int = 0, max_attempts: int = 3
+) -> str:
     task_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
     conn = sqlite3.connect(db_path)
     try:
         conn.execute(
             """INSERT INTO task_queue (id, task_type, payload, priority, max_attempts, created_at)
                VALUES (?, ?, ?, ?, ?, ?)""",
-            (task_id, task_type, json.dumps(payload), priority, max_attempts, datetime.utcnow().isoformat()),
+            (
+                task_id,
+                task_type,
+                json.dumps(payload),
+                priority,
+                max_attempts,
+                datetime.utcnow().isoformat(),
+            ),
         )
         conn.commit()
     finally:
@@ -121,7 +126,9 @@ def complete(db_path: Path | str, task_id: str, result: dict | None = None) -> N
 def fail(db_path: Path | str, task_id: str, error: str) -> None:
     conn = sqlite3.connect(db_path)
     try:
-        row = conn.execute("SELECT attempts, max_attempts FROM task_queue WHERE id=?", (task_id,)).fetchone()
+        row = conn.execute(
+            "SELECT attempts, max_attempts FROM task_queue WHERE id=?", (task_id,)
+        ).fetchone()
         if not row:
             return
         attempts, max_attempts = row
@@ -130,13 +137,17 @@ def fail(db_path: Path | str, task_id: str, error: str) -> None:
                 """UPDATE task_queue SET status='dead', finished_at=?, error=? WHERE id=?""",
                 (datetime.utcnow().isoformat(), error, task_id),
             )
-            log.warning("task %s moved to dead letter after %d attempts: %s", task_id[:8], attempts, error)
+            log.warning(
+                "task %s moved to dead letter after %d attempts: %s", task_id[:8], attempts, error
+            )
         else:
             conn.execute(
                 """UPDATE task_queue SET status='pending', error=? WHERE id=?""",
                 (error, task_id),
             )
-            log.info("task %s failed (attempt %d/%d): %s", task_id[:8], attempts, max_attempts, error)
+            log.info(
+                "task %s failed (attempt %d/%d): %s", task_id[:8], attempts, max_attempts, error
+            )
         conn.commit()
     finally:
         conn.close()
@@ -159,7 +170,8 @@ def retry_dead(db_path: Path | str, task_id: str) -> None:
     conn = sqlite3.connect(db_path)
     try:
         conn.execute(
-            """UPDATE task_queue SET status='pending', attempts=0, error=NULL, finished_at=NULL WHERE id=?""",
+            """UPDATE task_queue SET status='pending', attempts=0,
+               error=NULL, finished_at=NULL WHERE id=?""",
             (task_id,),
         )
         conn.commit()

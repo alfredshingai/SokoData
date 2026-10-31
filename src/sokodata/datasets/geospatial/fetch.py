@@ -87,12 +87,14 @@ def fetch_ocha_metadata(country: str = "ZW") -> pd.DataFrame:
         resources = result.get("resources", [])
         rows = []
         for r in resources:
-            rows.append({
-                "name": r.get("name"),
-                "format": r.get("format"),
-                "url": r.get("url") or r.get("download_url"),
-                "source": f"HDX COD-AB {country.upper()}",
-            })
+            rows.append(
+                {
+                    "name": r.get("name"),
+                    "format": r.get("format"),
+                    "url": r.get("url") or r.get("download_url"),
+                    "source": f"HDX COD-AB {country.upper()}",
+                }
+            )
         df = pd.DataFrame(rows)
         log.info("HDX boundaries metadata for %s: %d resources", country, len(df))
         return df
@@ -101,63 +103,49 @@ def fetch_ocha_metadata(country: str = "ZW") -> pd.DataFrame:
         return pd.DataFrame(columns=["name", "format", "url", "source"])
 
 
-def fetch_admin_boundaries(country: str = "ZW", raw_dir: Path | None = None, level: int = 1) -> Path | None:
+def fetch_admin_boundaries(
+    country: str = "ZW", raw_dir: Path | None = None, level: int = 1
+) -> Path | None:
     """Download GeoJSON for admin level 1 or 2. Returns path or None."""
-# Country-specific GeoJSON URLs (fallback to metadata API)
-geojson_urls = {
-    "ZW": {
-        1: "https://data.humdata.org/dataset/6d54e1d3-8d45-409c-8c0d-0c5e0c0c0c0c/resource/download/zwe_adm1.geojson",
-        2: "https://data.humdata.org/dataset/6d54e1d3-8d45-409c-8c0d-0c5e0c0c0c0c/resource/download/zwe_adm2.geojson",
-    },
-    "KE": {
-        1: "https://data.humdata.org/dataset/4c1b9b5e-1e23-4f6b-8e8b-1b5e0c0c0c0c/resource/download/ken_adm1.geojson",
-        2: "https://data.humdata.org/dataset/4c1b9b5e-1e23-4f6b-8e8b-1b5e0c0c0c0c/resource/download/ken_adm2.geojson",
-    },
-    "MW": {
-        1: "https://data.humdata.org/dataset/cod-ab-mwi/resource/download/mwi_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-mwi/resource/download/mwi_adm2.geojson",
-    },
-    "MZ": {
-        1: "https://data.humdata.org/dataset/cod-ab-moz/resource/download/moz_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-moz/resource/download/moz_adm2.geojson",
-    },
-    "ZM": {
-        1: "https://data.humdata.org/dataset/cod-ab-zmb/resource/download/zmb_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-zmb/resource/download/zmb_adm2.geojson",
-    },
-    "TZ": {
-        1: "https://data.humdata.org/dataset/cod-ab-tza/resource/download/tza_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-tza/resource/download/tza_adm2.geojson",
-    },
-    "UG": {
-        1: "https://data.humdata.org/dataset/cod-ab-uga/resource/download/uga_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-uga/resource/download/uga_adm2.geojson",
-    },
-    "RW": {
-        1: "https://data.humdata.org/dataset/cod-ab-rwa/resource/download/rwa_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-rwa/resource/download/rwa_adm2.geojson",
-    },
-    "BI": {
-        1: "https://data.humdata.org/dataset/cod-ab-bdi/resource/download/bdi_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-bdi/resource/download/bdi_adm2.geojson",
-    },
-    "TZ": {
-        1: "https://data.humdata.org/dataset/cod-ab-tza/resource/download/tza_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-tza/resource/download/tza_adm2.geojson",
-    },
-    "UG": {
-        1: "https://data.humdata.org/dataset/cod-ab-uga/resource/download/uga_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-uga/resource/download/uga_adm2.geojson",
-    },
-    "RW": {
-        1: "https://data.humdata.org/dataset/cod-ab-rwa/resource/download/rwa_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-rwa/resource/download/rwa_adm2.geojson",
-    },
-    "BI": {
-        1: "https://data.humdata.org/dataset/cod-ab-bdi/resource/download/bdi_adm1.geojson",
-        2: "https://data.humdata.org/dataset/cod-ab-bdi/resource/download/bdi_adm2.geojson",
-    },
-}
+    # Country-specific GeoJSON URLs (fallback to metadata API)
+    geojson_urls = {
+        "ZW": {
+            1: "https://data.humdata.org/dataset/6d54e1d3-8d45-409c-8c0d-0c5e0c0c0c0c/resource/download/zwe_adm1.geojson",
+            2: "https://data.humdata.org/dataset/6d54e1d3-8d45-409c-8c0d-0c5e0c0c0c0c/resource/download/zwe_adm2.geojson",
+        },
+        "KE": {
+            1: "https://data.humdata.org/dataset/4c1b9b5e-1e23-4f6b-8e8b-1b5e0c0c0c0c/resource/download/ken_adm1.geojson",
+            2: "https://data.humdata.org/dataset/4c1b9b5e-1e23-4f6b-8e8b-1b5e0c0c0c0c/resource/download/ken_adm2.geojson",
+        },
+        "MW": {
+            1: "https://data.humdata.org/dataset/cod-ab-mwi/resource/download/mwi_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-mwi/resource/download/mwi_adm2.geojson",
+        },
+        "MZ": {
+            1: "https://data.humdata.org/dataset/cod-ab-moz/resource/download/moz_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-moz/resource/download/moz_adm2.geojson",
+        },
+        "ZM": {
+            1: "https://data.humdata.org/dataset/cod-ab-zmb/resource/download/zmb_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-zmb/resource/download/zmb_adm2.geojson",
+        },
+        "TZ": {
+            1: "https://data.humdata.org/dataset/cod-ab-tza/resource/download/tza_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-tza/resource/download/tza_adm2.geojson",
+        },
+        "UG": {
+            1: "https://data.humdata.org/dataset/cod-ab-uga/resource/download/uga_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-uga/resource/download/uga_adm2.geojson",
+        },
+        "RW": {
+            1: "https://data.humdata.org/dataset/cod-ab-rwa/resource/download/rwa_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-rwa/resource/download/rwa_adm2.geojson",
+        },
+        "BI": {
+            1: "https://data.humdata.org/dataset/cod-ab-bdi/resource/download/bdi_adm1.geojson",
+            2: "https://data.humdata.org/dataset/cod-ab-bdi/resource/download/bdi_adm2.geojson",
+        },
+    }
     base = raw_dir or RAW_DIR
     url = geojson_urls.get(country.upper(), {}).get(level)
     if not url:
@@ -173,7 +161,9 @@ geojson_urls = {
         return None
 
 
-def fetch_geospatial_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[str, pd.DataFrame]:
+def fetch_geospatial_all(
+    country: str = "ZW", raw_dir: Path | None = None
+) -> dict[str, pd.DataFrame]:
     """Fetch geospatial - returns metadata DataFrame + paths."""
     meta = fetch_ocha_metadata(country)
     # also include market locations from markets dataset if available

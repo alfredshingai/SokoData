@@ -1,7 +1,7 @@
 """Fetch agriculture data for a country.
 
-* World Bank WDI (open JSON, CC BY-4.0) - AG.PRD.FOOD.XD, AG.YLD.CREL.KG, AG.LND.AGRI.ZS, AG.PRD.CROP.XD
-  Annual, 1960-present, stable fallback.
+* World Bank WDI (open JSON, CC BY-4.0) - AG.PRD.FOOD.XD, AG.YLD.CREL.KG, AG.LND.AGRI.ZS,
+  AG.PRD.CROP.XD
 * FAO FAOSTAT API (open JSON) - crops and livestock QCL, fallback if WDI gaps.
 * Country-specific scrapers (Agritex/ZIMSTAT for Zimbabwe) - degrade gracefully.
 """
@@ -27,7 +27,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -45,7 +51,16 @@ def fetch_worldbank_agriculture(country: str = "ZW") -> pd.DataFrame:
     crop = _fetch_wdi_indicator("AG.PRD.CROP.XD", "crop_prod_idx", country)
     dfs = [d for d in (yld, gdp, food, crop) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "cereal_yield_kg_ha", "agri_gdp_pct", "food_prod_idx", "crop_prod_idx", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "cereal_yield_kg_ha",
+                "agri_gdp_pct",
+                "food_prod_idx",
+                "crop_prod_idx",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -71,7 +86,13 @@ def fetch_fao_maize(country: str = "ZW") -> pd.DataFrame:
                 year = r.get("Year") or r.get("year")
                 val = r.get("Value") or r.get("value")
                 if year and val:
-                    out.append({"date": f"{year}-12-31", "maize_tonnes": float(str(val).replace(",", "")), "source": f"FAO FAOSTAT QCL ({country})"})
+                    out.append(
+                        {
+                            "date": f"{year}-12-31",
+                            "maize_tonnes": float(str(val).replace(",", "")),
+                            "source": f"FAO FAOSTAT QCL ({country})",
+                        }
+                    )
             except Exception:
                 continue
         df = pd.DataFrame(out)
@@ -99,17 +120,21 @@ def fetch_agritex_html(raw_dir: Path | None = None) -> pd.DataFrame:
     return df
 
 
-def fetch_agriculture_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[str, pd.DataFrame]:
+def fetch_agriculture_all(
+    country: str = "ZW", raw_dir: Path | None = None
+) -> dict[str, pd.DataFrame]:
     wdi = fetch_worldbank_agriculture(country)
     fao = fetch_fao_maize(country)
     # Zimbabwe-specific scrapers
     if country == "ZW":
         html = fetch_agritex_html(raw_dir)
-        pdf = pd.DataFrame()
         try:
             base = raw_dir or RAW_DIR
             pdf_path = Path(base) / "zimstat_agri.pdf"
-            download_pdf("https://www.zimstat.co.zw/wp-content/uploads/publications/Agriculture/Crops.pdf", pdf_path)
+            download_pdf(
+                "https://www.zimstat.co.zw/wp-content/uploads/publications/Agriculture/Crops.pdf",
+                pdf_path,
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-3")
             log.info("ZIMSTAT agri PDF: %d tables", len(tables))
         except Exception as e:
