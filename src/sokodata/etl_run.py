@@ -63,7 +63,9 @@ def main() -> int:
         help="run the markets ETL for every configured country",
     )
     parser.add_argument("--only", action="append", choices=DATASETS, default=None)
-    parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
+    parser.add_argument(
+        "--skip-fetch", action="store_true", help="reuse already-downloaded files for markets"
+    )
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     parser.add_argument(
