@@ -16,6 +16,8 @@ from pathlib import Path
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import APIKeyHeader
 
+from sokodata.config import DB_PATH
+
 log = logging.getLogger(__name__)
 
 AUTH_SCHEMA = """
@@ -50,7 +52,7 @@ class AuthContext:
 
 
 # Configurable database path
-_auth_db_path = "data/sokodata.db"
+_auth_db_path = str(DB_PATH)
 
 
 def set_auth_db_path(path: str) -> None:

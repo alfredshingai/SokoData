@@ -9,7 +9,6 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 from sokodata.datasets.markets.analysis.seasonal import anomalies, seasonal_baseline
-from sokodata.datasets.markets.store import connect as db_connect
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -191,7 +190,7 @@ def join_datasets(
     - Join climate with agriculture: left=climate_monthly, right=agri_annual, on=["country","date"]
     """
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         # Load left table
         left_df = _load_table(
@@ -271,12 +270,10 @@ def join_datasets(
     except Exception as e:
         logger.error(f"Join failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
-
 
 @router.get("/correlate")
 def correlate_datasets(
+    request: Request,
     table_x: str = Query(..., description="First dataset (x-axis)"),
     column_x: str = Query(..., description="Column in first dataset"),
     table_y: str = Query(..., description="Second dataset (y-axis)"),
@@ -290,7 +287,7 @@ def correlate_datasets(
 ):
     """Calculate correlation between columns from two joined datasets."""
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         df_x = _load_table(conn, table_x, country=country, start=start, end=end, admin1=admin1)
         df_y = _load_table(conn, table_y, country=country, start=start, end=end, admin1=admin1)
@@ -326,12 +323,10 @@ def correlate_datasets(
     except Exception as e:
         logger.error(f"Correlation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
-
 
 @router.get("/summary")
 def join_summary(
+    request: Request,
     tables: list[str] = Query(..., description="Tables to analyze"),
     country: str | None = Query(default=None, max_length=3),
     start: Date | None = Query(default=None),
@@ -340,7 +335,7 @@ def join_summary(
 ):
     """Get summary statistics for potential joins between multiple tables."""
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         results = {}
         for table in tables:
@@ -377,12 +372,10 @@ def join_summary(
     except Exception as e:
         logger.error(f"Join summary failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
-
 
 @router.get("/anomalies")
 def detect_anomalies(
+    request: Request,
     table: str = Query(..., description="Table name"),
     column: str = Query(..., description="Column to check for anomalies"),
     threshold: float = Query(default=2.0, description="Z-score threshold for anomaly detection"),
@@ -393,7 +386,7 @@ def detect_anomalies(
 ):
     """Detect anomalies in a single dataset column using robust z-score (MAD-based)."""
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         df = _load_table(conn, table, country=country, start=start, end=end, admin1=admin1)
         if df.empty:
@@ -448,12 +441,10 @@ def detect_anomalies(
     except Exception as e:
         logger.error(f"Anomaly detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
-
 
 @router.get("/anomalies/correlated")
 def correlated_anomalies(
+    request: Request,
     table_x: str = Query(..., description="First dataset"),
     column_x: str = Query(..., description="Column in first dataset"),
     table_y: str = Query(..., description="Second dataset"),
@@ -470,7 +461,7 @@ def correlated_anomalies(
     Returns anomalies that occur at the same time in both datasets.
     """
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         df_x = _load_table(conn, table_x, country=country, start=start, end=end, admin1=admin1)
         df_y = _load_table(conn, table_y, country=country, start=start, end=end, admin1=admin1)
@@ -513,12 +504,10 @@ def correlated_anomalies(
     except Exception as e:
         logger.error(f"Correlated anomaly detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
-
 
 @router.get("/anomalies/pattern")
 def anomaly_pattern(
+    request: Request,
     table: str = Query(..., description="Table name"),
     column: str = Query(..., description="Column to analyze"),
     window: int = Query(default=30, description="Rolling window size for pattern detection"),
@@ -529,7 +518,7 @@ def anomaly_pattern(
 ):
     """Detect anomaly patterns (seasonal, trend, level shifts) in a time series."""
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         df = _load_table(conn, table, country=country, start=start, end=end, admin1=admin1)
         if df.empty:
@@ -586,12 +575,10 @@ def anomaly_pattern(
     except Exception as e:
         logger.error(f"Anomaly pattern detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
-
 
 @router.get("/forecast")
 def forecast(
+    request: Request,
     table: str = Query(..., description="Table name"),
     column: str = Query(..., description="Column to forecast"),
     horizon: int = Query(default=30, ge=1, le=365, description="Forecast horizon (days)"),
@@ -604,7 +591,7 @@ def forecast(
 ):
     """Forecast future values using harmonic regression seasonal baseline."""
 
-    conn = db_connect("data/sokodata.db", read_only=True)
+    conn = request.app.state.conn
     try:
         df = _load_table(conn, table, country=country, start=start, end=end, admin1=admin1)
         if df.empty:
@@ -647,5 +634,3 @@ def forecast(
     except Exception as e:
         logger.error(f"Forecast failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
-    finally:
-        conn.close()
