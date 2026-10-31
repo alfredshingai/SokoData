@@ -15,7 +15,7 @@ import sqlite3
 import sys
 
 from sokodata.config import DB_PATH
-from sokodata.core.auth import create_api_key, hash_key, init_auth_db
+from sokodata.core.auth import create_api_key, init_auth_db
 
 
 def _connect(db_path: str) -> sqlite3.Connection:
@@ -52,13 +52,16 @@ def main() -> int:
     try:
         if args.command == "list":
             rows = conn.execute(
-                "SELECT id, name, tier, created_at, last_used, enabled FROM api_keys ORDER BY created_at"
+                "SELECT id, name, tier, created_at, last_used, enabled "
+                "FROM api_keys ORDER BY created_at"
             ).fetchall()
             if not rows:
                 print("no API keys yet; create one: python -m sokodata.auth_cli create")
             for r in rows:
                 state = "active" if r["enabled"] else "disabled"
-                print(f"{r['id']}  tier={r['tier']}  {state:<8}  {r['name']!r}  created={r['created_at']}")
+                print(
+                    f"{r['id']}  tier={r['tier']}  {state:<8}  {r['name']!r}  created={r['created_at']}"
+                )
             return 0
 
         if args.command == "revoke":
