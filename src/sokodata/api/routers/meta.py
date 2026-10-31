@@ -1,8 +1,51 @@
-"""Meta endpoints for platform health and freshness."""
+"""Meta endpoints for platform health, coverage and freshness."""
 
 from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["meta"])
+
+
+@router.get("/coverage")
+def coverage(request: Request):
+    """Per-country market-price coverage, straight from the warehouse.
+
+    Answers "which countries does SokoData currently serve?" without
+    trusting configuration - only rows that are actually loaded.
+    """
+    conn = request.app.state.conn
+    try:
+        rows = conn.execute(
+            """
+            SELECT m.countryiso3 AS country,
+                   COUNT(*) AS observations,
+                   COUNT(DISTINCT p.market_id) AS markets,
+                   COUNT(DISTINCT p.commodity_id) AS commodities,
+                   MIN(p.date) AS first_date,
+                   MAX(p.date) AS last_date
+            FROM prices p JOIN markets m ON m.market_id = p.market_id
+            GROUP BY m.countryiso3
+            ORDER BY observations DESC
+            """
+        ).fetchall()
+    except Exception:
+        rows = []
+    countries = [dict(r) for r in rows]
+    try:
+        totals_row = conn.execute(
+            """
+            SELECT COUNT(*) AS observations,
+                   COUNT(DISTINCT market_id) AS markets,
+                   COUNT(DISTINCT commodity_id) AS commodities,
+                   MIN(date) AS first_date,
+                   MAX(date) AS last_date
+            FROM prices
+            """
+        ).fetchone()
+        totals = dict(totals_row) if totals_row else {"observations": 0}
+    except Exception:
+        totals = {"observations": 0}
+    totals["countries"] = len(countries)
+    return {"countries": countries, "totals": totals}
 
 
 @router.get("/meta/freshness")
