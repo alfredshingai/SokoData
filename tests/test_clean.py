@@ -48,10 +48,26 @@ def test_clean_raises_on_schema_drift(raw_prices):
 
 def test_clean_nulls_implausible_usd():
     """Broken USD conversions are nulled in any era; sane ones survive."""
+
     def row(date, usd):
-        return (date, "Harare", "Harare", "A", 1, -17.9, 31.0,
-                "cereals and tubers", "Maize", 10, "KG", "aggregate", "Retail",
-                "ZWL", 100.0, usd)
+        return (
+            date,
+            "Harare",
+            "Harare",
+            "A",
+            1,
+            -17.9,
+            31.0,
+            "cereals and tubers",
+            "Maize",
+            10,
+            "KG",
+            "aggregate",
+            "Retail",
+            "ZWL",
+            100.0,
+            usd,
+        )
 
     df = pd.DataFrame(
         [
@@ -61,9 +77,24 @@ def test_clean_nulls_implausible_usd():
             row("2021-06-15", 0.001),  # broken ZWL-era conversion
             row("2022-06-15", 0.9),  # plausibly cheap but sane
         ],
-        columns=["date", "admin1", "admin2", "market", "market_id", "latitude", "longitude",
-                 "category", "commodity", "commodity_id", "unit", "priceflag", "pricetype",
-                 "currency", "price", "usdprice"],
+        columns=[
+            "date",
+            "admin1",
+            "admin2",
+            "market",
+            "market_id",
+            "latitude",
+            "longitude",
+            "category",
+            "commodity",
+            "commodity_id",
+            "unit",
+            "priceflag",
+            "pricetype",
+            "currency",
+            "price",
+            "usdprice",
+        ],
     )
     out = clean_prices(df).set_index("date")["usdprice"]
 
@@ -76,10 +107,24 @@ def test_clean_markets_basic():
     df = clean_markets(
         pd.DataFrame(
             [
-                {"market_id": 1, "market": " Mbare ", "countryiso3": "ZWE",
-                 "admin1": "Harare", "admin2": None, "latitude": -17.86, "longitude": 31.04},
-                {"market_id": 1, "market": "Mbare", "countryiso3": "ZWE",
-                 "admin1": "Harare", "admin2": None, "latitude": -17.86, "longitude": 31.04},
+                {
+                    "market_id": 1,
+                    "market": " Mbare ",
+                    "countryiso3": "ZWE",
+                    "admin1": "Harare",
+                    "admin2": None,
+                    "latitude": -17.86,
+                    "longitude": 31.04,
+                },
+                {
+                    "market_id": 1,
+                    "market": "Mbare",
+                    "countryiso3": "ZWE",
+                    "admin1": "Harare",
+                    "admin2": None,
+                    "latitude": -17.86,
+                    "longitude": 31.04,
+                },
             ]
         )
     )

@@ -26,7 +26,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +50,16 @@ def fetch_worldbank_finance(country: str = "ZW") -> pd.DataFrame:
     accts = _fetch_wdi_indicator("GFDD.AI.01", "accounts_pct", country)
     dfs = [d for d in (dom, remit, bank, accts) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "domestic_credit_pct_gdp", "remittances_usd", "private_credit_pct_gdp", "accounts_pct", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "domestic_credit_pct_gdp",
+                "remittances_usd",
+                "private_credit_pct_gdp",
+                "accounts_pct",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -57,7 +72,9 @@ def fetch_worldbank_finance(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_rbz_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific RBZ scraper."""
-    tables = fetch_html_tables("https://www.rbz.co.zw/", match="Credit|Interest|Remittance|Finance|Monetary")
+    tables = fetch_html_tables(
+        "https://www.rbz.co.zw/", match="Credit|Interest|Remittance|Finance|Monetary"
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "RBZ HTML"})

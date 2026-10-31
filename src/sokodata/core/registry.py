@@ -7,6 +7,7 @@ and a folder under src/sokodata/datasets/<name>/.
 
 from dataclasses import dataclass, field
 
+
 @dataclass
 class DatasetMeta:
     id: str  # e.g. "markets", "economy", "climate"
@@ -26,7 +27,8 @@ DATASETS: dict[str, DatasetMeta] = {
     "markets": DatasetMeta(
         id="markets",
         label="Food Market Prices",
-        description="Retail food prices for ~486 Zimbabwean markets from WFP via HDX. USD-normalized, currency-safe.",
+        description="Retail food prices for ~486 Zimbabwean markets from WFP via HDX. "
+        "USD-normalized, currency-safe.",
         sources=[
             {
                 "name": "WFP Price Database via HDX",
@@ -45,7 +47,8 @@ DATASETS: dict[str, DatasetMeta] = {
     "economy": DatasetMeta(
         id="economy",
         label="Economy & Finance",
-        description="ZiG/USD rates (RBZ), CPI/inflation (ZIMSTAT), fuel prices (ZERA). Mixed: World Bank API + HTML/PDF scraping.",
+        description="ZiG/USD rates (RBZ), CPI/inflation (ZIMSTAT), fuel prices (ZERA). Mixed: "
+        "World Bank API + HTML/PDF scraping.",
         sources=[
             {"name": "RBZ Market Rates", "url": "https://www.rbz.co.zw/", "license": "public"},
             {"name": "ZIMSTAT CPI", "url": "https://www.zimstat.co.zw/", "license": "public"},
@@ -67,7 +70,8 @@ DATASETS: dict[str, DatasetMeta] = {
     "climate": DatasetMeta(
         id="climate",
         label="Climate & Weather",
-        description="Rainfall and temperature for Zimbabwe by admin1/market. Open APIs: Open-Meteo Archive + NASA POWER, CHIRPS fallback.",
+        description="Rainfall and temperature for Zimbabwe by admin1/market. Open APIs: "
+        "Open-Meteo Archive + NASA POWER, CHIRPS fallback.",
         sources=[
             {
                 "name": "Open-Meteo Archive API",
@@ -96,7 +100,8 @@ DATASETS: dict[str, DatasetMeta] = {
     "demographics": DatasetMeta(
         id="demographics",
         label="Demographics & Population",
-        description="Population, growth and 2022 Census by province. World Bank WDI + ZIMSTAT census PDF/HTML scraping.",
+        description="Population, growth and 2022 Census by province. World Bank WDI + ZIMSTAT "
+        "census PDF/HTML scraping.",
         sources=[
             {
                 "name": "World Bank WDI Population",
@@ -120,10 +125,19 @@ DATASETS: dict[str, DatasetMeta] = {
     "agriculture": DatasetMeta(
         id="agriculture",
         label="Agriculture & Food Production",
-        description="Cereal yields, food/crop production indices and FAO maize. World Bank WDI + FAO FAOSTAT + Agritex scrape.",
+        description="Cereal yields, food/crop production indices and FAO maize. World Bank WDI + "
+        "FAO FAOSTAT + Agritex scrape.",
         sources=[
-            {"name": "World Bank WDI Agriculture", "url": "https://data.worldbank.org/indicator/AG.YLD.CREL.KG", "license": "CC BY-4.0"},
-            {"name": "FAO FAOSTAT QCL", "url": "https://www.fao.org/faostat/en/#data/QCL", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Agriculture",
+                "url": "https://data.worldbank.org/indicator/AG.YLD.CREL.KG",
+                "license": "CC BY-4.0",
+            },
+            {
+                "name": "FAO FAOSTAT QCL",
+                "url": "https://www.fao.org/faostat/en/#data/QCL",
+                "license": "CC BY-4.0",
+            },
             {"name": "Agritex / ZIMSTAT", "url": "https://www.zimstat.co.zw/", "license": "public"},
         ],
         tables=["agri_annual", "agri_fao_maize"],
@@ -137,9 +151,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "health": DatasetMeta(
         id="health",
         label="Health",
-        description="Infant/under-5 mortality, immunization, health expenditure. World Bank WDI + MoHCC bulletin scrape.",
+        description="Infant/under-5 mortality, immunization, health expenditure. World Bank WDI "
+        "+ MoHCC bulletin scrape.",
         sources=[
-            {"name": "World Bank WDI Health", "url": "https://data.worldbank.org/indicator/SP.DYN.IMRT.IN", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Health",
+                "url": "https://data.worldbank.org/indicator/SP.DYN.IMRT.IN",
+                "license": "CC BY-4.0",
+            },
             {"name": "MoHCC Zimbabwe", "url": "https://www.mohcc.gov.zw/", "license": "public"},
         ],
         tables=["health_annual"],
@@ -153,9 +172,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "education": DatasetMeta(
         id="education",
         label="Education",
-        description="Primary/secondary enrollment, literacy, completion. World Bank WDI + MoPSE scrape.",
+        description="Primary/secondary enrollment, literacy, completion. World Bank WDI + MoPSE "
+        "scrape.",
         sources=[
-            {"name": "World Bank WDI Education", "url": "https://data.worldbank.org/indicator/SE.PRM.NENR", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Education",
+                "url": "https://data.worldbank.org/indicator/SE.PRM.NENR",
+                "license": "CC BY-4.0",
+            },
             {"name": "MoPSE Zimbabwe", "url": "https://www.mopse.gov.zw/", "license": "public"},
         ],
         tables=["education_annual"],
@@ -169,9 +193,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "energy": DatasetMeta(
         id="energy",
         label="Energy",
-        description="Electricity access, consumption, renewable share. World Bank WDI + ZESA/ZERA scrape.",
+        description="Electricity access, consumption, renewable share. World Bank WDI + "
+        "ZESA/ZERA scrape.",
         sources=[
-            {"name": "World Bank WDI Energy", "url": "https://data.worldbank.org/indicator/EG.ELC.ACCS.ZS", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Energy",
+                "url": "https://data.worldbank.org/indicator/EG.ELC.ACCS.ZS",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZESA Holdings", "url": "https://www.zesa.co.zw/", "license": "public"},
             {"name": "ZERA", "url": "https://www.zera.co.zw/", "license": "public"},
         ],
@@ -186,9 +215,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "water": DatasetMeta(
         id="water",
         label="Water & Sanitation",
-        description="Safe/basic drinking water and sanitation. World Bank WDI + ZINWA dam levels scrape.",
+        description="Safe/basic drinking water and sanitation. World Bank WDI + ZINWA dam levels "
+        "scrape.",
         sources=[
-            {"name": "World Bank WDI Water", "url": "https://data.worldbank.org/indicator/SH.H2O.SMDW.ZS", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Water",
+                "url": "https://data.worldbank.org/indicator/SH.H2O.SMDW.ZS",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZINWA", "url": "https://www.zinwa.co.zw/", "license": "public"},
         ],
         tables=["water_annual"],
@@ -202,10 +236,19 @@ DATASETS: dict[str, DatasetMeta] = {
     "transport": DatasetMeta(
         id="transport",
         label="Transport & Connectivity",
-        description="Air departures, rail/road network, internet use. World Bank WDI + Ministry of Transport scrape.",
+        description="Air departures, rail/road network, internet use. World Bank WDI + Ministry "
+        "of Transport scrape.",
         sources=[
-            {"name": "World Bank WDI Transport", "url": "https://data.worldbank.org/indicator/IS.AIR.DPRT", "license": "CC BY-4.0"},
-            {"name": "Ministry of Transport Zimbabwe", "url": "https://www.transport.gov.zw/", "license": "public"},
+            {
+                "name": "World Bank WDI Transport",
+                "url": "https://data.worldbank.org/indicator/IS.AIR.DPRT",
+                "license": "CC BY-4.0",
+            },
+            {
+                "name": "Ministry of Transport Zimbabwe",
+                "url": "https://www.transport.gov.zw/",
+                "license": "public",
+            },
         ],
         tables=["transport_annual"],
         update_frequency="annual",
@@ -218,10 +261,19 @@ DATASETS: dict[str, DatasetMeta] = {
     "mining": DatasetMeta(
         id="mining",
         label="Mining & Minerals",
-        description="Mineral rents, ore/metal exports, gold deliveries. World Bank WDI + Chamber of Mines / RBZ scrape.",
+        description="Mineral rents, ore/metal exports, gold deliveries. World Bank WDI + Chamber "
+        "of Mines / RBZ scrape.",
         sources=[
-            {"name": "World Bank WDI Mining", "url": "https://data.worldbank.org/indicator/NY.GDP.TOTL.RT.ZS", "license": "CC BY-4.0"},
-            {"name": "Chamber of Mines Zimbabwe", "url": "https://www.chamberofminesofzimbabwe.com/", "license": "public"},
+            {
+                "name": "World Bank WDI Mining",
+                "url": "https://data.worldbank.org/indicator/NY.GDP.TOTL.RT.ZS",
+                "license": "CC BY-4.0",
+            },
+            {
+                "name": "Chamber of Mines Zimbabwe",
+                "url": "https://www.chamberofminesofzimbabwe.com/",
+                "license": "public",
+            },
             {"name": "RBZ Gold Deliveries", "url": "https://www.rbz.co.zw/", "license": "public"},
         ],
         tables=["mining_annual"],
@@ -235,11 +287,20 @@ DATASETS: dict[str, DatasetMeta] = {
     "governance": DatasetMeta(
         id="governance",
         label="Governance",
-        description="CPIA property rights/transparency, women in parliament, military spending, gov debt. World Bank WDI + ZEC/Afrobarometer scrape.",
+        description="CPIA property rights/transparency, women in parliament, military spending, "
+        "gov debt. World Bank WDI + ZEC/Afrobarometer scrape.",
         sources=[
-            {"name": "World Bank WDI Governance", "url": "https://data.worldbank.org/indicator/IQ.CPA.PROP.XQ", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Governance",
+                "url": "https://data.worldbank.org/indicator/IQ.CPA.PROP.XQ",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZEC Zimbabwe", "url": "https://www.zec.org.zw/", "license": "public"},
-            {"name": "Afrobarometer Zimbabwe", "url": "https://www.afrobarometer.org/countries/zimbabwe/", "license": "CC BY"},
+            {
+                "name": "Afrobarometer Zimbabwe",
+                "url": "https://www.afrobarometer.org/countries/zimbabwe/",
+                "license": "CC BY",
+            },
         ],
         tables=["governance_annual"],
         update_frequency="annual",
@@ -252,9 +313,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "trade": DatasetMeta(
         id="trade",
         label="Trade",
-        description="Exports/imports % GDP and merchandise values. World Bank WDI + ZimTrade/ZIMSTAT scrape.",
+        description="Exports/imports % GDP and merchandise values. World Bank WDI + "
+        "ZimTrade/ZIMSTAT scrape.",
         sources=[
-            {"name": "World Bank WDI Trade", "url": "https://data.worldbank.org/indicator/NE.EXP.GNFS.ZS", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Trade",
+                "url": "https://data.worldbank.org/indicator/NE.EXP.GNFS.ZS",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZimTrade", "url": "https://www.tradezimbabwe.com/", "license": "public"},
         ],
         tables=["trade_annual"],
@@ -268,9 +334,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "labour": DatasetMeta(
         id="labour",
         label="Labour & Jobs",
-        description="Unemployment, participation, vulnerable employment. World Bank WDI + ILO/ZIMSTAT LFCLS scrape.",
+        description="Unemployment, participation, vulnerable employment. World Bank WDI + "
+        "ILO/ZIMSTAT LFCLS scrape.",
         sources=[
-            {"name": "World Bank WDI Labour", "url": "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Labour",
+                "url": "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZIMSTAT LFCLS", "url": "https://www.zimstat.co.zw/", "license": "public"},
         ],
         tables=["labour_annual"],
@@ -286,7 +357,11 @@ DATASETS: dict[str, DatasetMeta] = {
         label="Environment",
         description="CO2 per capita, forest share/area, PM2.5. World Bank WDI + EMA scrape.",
         sources=[
-            {"name": "World Bank WDI Environment", "url": "https://data.worldbank.org/indicator/EN.ATM.CO2E.PC", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Environment",
+                "url": "https://data.worldbank.org/indicator/EN.ATM.CO2E.PC",
+                "license": "CC BY-4.0",
+            },
             {"name": "EMA Zimbabwe", "url": "https://www.ema.co.zw/", "license": "public"},
         ],
         tables=["environment_annual"],
@@ -300,9 +375,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "poverty": DatasetMeta(
         id="poverty",
         label="Poverty & Inequality",
-        description="Extreme/national poverty, Gini, shared prosperity. World Bank WDI + ZIMSTAT PICES scrape.",
+        description="Extreme/national poverty, Gini, shared prosperity. World Bank WDI + ZIMSTAT "
+        "PICES scrape.",
         sources=[
-            {"name": "World Bank WDI Poverty", "url": "https://data.worldbank.org/indicator/SI.POV.DDAY", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Poverty",
+                "url": "https://data.worldbank.org/indicator/SI.POV.DDAY",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZIMSTAT PICES", "url": "https://www.zimstat.co.zw/", "license": "public"},
         ],
         tables=["poverty_annual"],
@@ -316,9 +396,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "ict": DatasetMeta(
         id="ict",
         label="ICT & Digital",
-        description="Internet use, mobile subscriptions, broadband. World Bank WDI + POTRAZ scrape.",
+        description="Internet use, mobile subscriptions, broadband. World Bank WDI + POTRAZ "
+        "scrape.",
         sources=[
-            {"name": "World Bank WDI ICT", "url": "https://data.worldbank.org/indicator/IT.NET.USER.ZS", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI ICT",
+                "url": "https://data.worldbank.org/indicator/IT.NET.USER.ZS",
+                "license": "CC BY-4.0",
+            },
             {"name": "POTRAZ Zimbabwe", "url": "https://www.potraz.gov.zw/", "license": "public"},
         ],
         tables=["ict_annual"],
@@ -332,9 +417,14 @@ DATASETS: dict[str, DatasetMeta] = {
     "finance": DatasetMeta(
         id="finance",
         label="Finance & Inclusion",
-        description="Domestic/private credit, remittances, bank accounts. World Bank WDI + RBZ scrape.",
+        description="Domestic/private credit, remittances, bank accounts. World Bank WDI + RBZ "
+        "scrape.",
         sources=[
-            {"name": "World Bank WDI Finance", "url": "https://data.worldbank.org/indicator/FS.AST.DOMS.GD.ZS", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Finance",
+                "url": "https://data.worldbank.org/indicator/FS.AST.DOMS.GD.ZS",
+                "license": "CC BY-4.0",
+            },
             {"name": "RBZ", "url": "https://www.rbz.co.zw/", "license": "public"},
         ],
         tables=["finance_annual"],
@@ -350,7 +440,11 @@ DATASETS: dict[str, DatasetMeta] = {
         label="Tourism",
         description="Tourist arrivals and receipts. World Bank WDI + ZTA scrape.",
         sources=[
-            {"name": "World Bank WDI Tourism", "url": "https://data.worldbank.org/indicator/ST.INT.ARVL", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Tourism",
+                "url": "https://data.worldbank.org/indicator/ST.INT.ARVL",
+                "license": "CC BY-4.0",
+            },
             {"name": "ZTA", "url": "https://www.zimbabwetourism.net/", "license": "public"},
         ],
         tables=["tourism_annual"],
@@ -366,7 +460,11 @@ DATASETS: dict[str, DatasetMeta] = {
         label="Aid & ODA",
         description="Net ODA, ODA % GNI, per capita. World Bank WDI + OECD scrape.",
         sources=[
-            {"name": "World Bank WDI Aid", "url": "https://data.worldbank.org/indicator/DT.ODA.ALLD.CD", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI Aid",
+                "url": "https://data.worldbank.org/indicator/DT.ODA.ALLD.CD",
+                "license": "CC BY-4.0",
+            },
             {"name": "OECD DAC", "url": "https://www.oecd.org/dac/", "license": "CC BY"},
         ],
         tables=["aid_annual"],
@@ -380,10 +478,19 @@ DATASETS: dict[str, DatasetMeta] = {
     "gender": DatasetMeta(
         id="gender",
         label="Gender",
-        description="Women in parliament, female LFPR, primary parity, maternal mortality. World Bank WDI + UN Women scrape.",
+        description="Women in parliament, female LFPR, primary parity, maternal mortality. World "
+        "Bank WDI + UN Women scrape.",
         sources=[
-            {"name": "World Bank WDI Gender", "url": "https://data.worldbank.org/indicator/SG.GEN.PARL.ZS", "license": "CC BY-4.0"},
-            {"name": "UN Women", "url": "https://data.unwomen.org/country/zimbabwe", "license": "CC BY"},
+            {
+                "name": "World Bank WDI Gender",
+                "url": "https://data.worldbank.org/indicator/SG.GEN.PARL.ZS",
+                "license": "CC BY-4.0",
+            },
+            {
+                "name": "UN Women",
+                "url": "https://data.unwomen.org/country/zimbabwe",
+                "license": "CC BY",
+            },
         ],
         tables=["gender_annual"],
         update_frequency="annual",
@@ -398,7 +505,11 @@ DATASETS: dict[str, DatasetMeta] = {
         label="Geospatial & Boundaries",
         description="Admin boundaries (HDX COD-AB) and market GeoJSON. GeoJSON + metadata.",
         sources=[
-            {"name": "HDX COD-AB", "url": "https://data.humdata.org/dataset/cod-ab", "license": "CC BY-IGO"},
+            {
+                "name": "HDX COD-AB",
+                "url": "https://data.humdata.org/dataset/cod-ab",
+                "license": "CC BY-IGO",
+            },
         ],
         tables=["geospatial_metadata"],
         update_frequency="static",
@@ -411,10 +522,19 @@ DATASETS: dict[str, DatasetMeta] = {
     "indicators": DatasetMeta(
         id="indicators",
         label="SDG & NDP Indicators",
-        description="SDG indicators, National Development Plan indicators. World Bank WDI, UNSD SDG, stats offices.",
+        description="SDG indicators, National Development Plan indicators. World Bank WDI, UNSD "
+        "SDG, stats offices.",
         sources=[
-            {"name": "World Bank WDI SDG", "url": "https://data.worldbank.org/indicator/SG.GEN.PARL.ZS", "license": "CC BY-4.0"},
-            {"name": "UNSD SDG", "url": "https://unstats.un.org/sdgs/indicators/database/", "license": "CC BY-4.0"},
+            {
+                "name": "World Bank WDI SDG",
+                "url": "https://data.worldbank.org/indicator/SG.GEN.PARL.ZS",
+                "license": "CC BY-4.0",
+            },
+            {
+                "name": "UNSD SDG",
+                "url": "https://unstats.un.org/sdgs/indicators/database/",
+                "license": "CC BY-4.0",
+            },
             {"name": "National stats offices", "url": "", "license": "public"},
         ],
         tables=["indicators_annual"],

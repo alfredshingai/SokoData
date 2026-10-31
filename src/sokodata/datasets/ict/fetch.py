@@ -26,7 +26,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +50,16 @@ def fetch_worldbank_ict(country: str = "ZW") -> pd.DataFrame:
     tel = _fetch_wdi_indicator("IT.MLT.MAIN.P2", "tel_lines_per_100", country)
     dfs = [d for d in (net, cell, bb, tel) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "internet_users_pct", "cell_subs_per_100", "fixed_broadband_per_100", "tel_lines_per_100", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "internet_users_pct",
+                "cell_subs_per_100",
+                "fixed_broadband_per_100",
+                "tel_lines_per_100",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -57,7 +72,9 @@ def fetch_worldbank_ict(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_potraz_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific POTRAZ scraper."""
-    tables = fetch_html_tables("https://www.potraz.gov.zw/", match="Telecom|Mobile|Internet|Broadband|Subscriber")
+    tables = fetch_html_tables(
+        "https://www.potraz.gov.zw/", match="Telecom|Mobile|Internet|Broadband|Subscriber"
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "POTRAZ HTML"})
@@ -73,7 +90,9 @@ def fetch_ict_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[str,
         try:
             base = raw_dir or RAW_DIR
             pdf_path = Path(base) / "potraz_stats.pdf"
-            download_pdf("https://www.potraz.gov.zw/wp-content/uploads/Telecom_Statistics.pdf", pdf_path)
+            download_pdf(
+                "https://www.potraz.gov.zw/wp-content/uploads/Telecom_Statistics.pdf", pdf_path
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-2")
             log.info("POTRAZ PDF: %d tables", len(tables))
         except Exception as e:

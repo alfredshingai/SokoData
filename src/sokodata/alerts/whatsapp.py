@@ -70,9 +70,7 @@ def build_reply(user_text: str) -> str:
     movers = telegram.fetch_json(f"{telegram.API_BASE}/v1/insights/movers?window_days=90&limit=10")
     anomalies = telegram.fetch_json(f"{telegram.API_BASE}/v1/insights/anomalies?limit=5")
     coverage = telegram.fetch_json(f"{telegram.API_BASE}/health")["coverage"]
-    return telegram.format_digest(
-        movers, anomalies, coverage.get("last_date"), markup="whatsapp"
-    )
+    return telegram.format_digest(movers, anomalies, coverage.get("last_date"), markup="whatsapp")
 
 
 def handle_webhook(payload: dict, token: str, phone_number_id: str) -> int:

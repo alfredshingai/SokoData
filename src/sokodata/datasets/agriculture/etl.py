@@ -13,7 +13,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 log = logging.getLogger(__name__)
 
 
-def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW") -> dict[str, int]:
+def run_etl(
+    data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW"
+) -> dict[str, int]:
     raw = fetch_agriculture_all(country, data_dir)
     annual = clean_annual(raw["annual"])
     fao = clean_fao(raw["fao_maize"])

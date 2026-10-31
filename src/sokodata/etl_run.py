@@ -23,13 +23,73 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, default=RAW_DIR)
     parser.add_argument("--db", type=Path, default=DB_PATH)
     parser.add_argument("--country", default="ZW", help="country ISO3 code (ZW, KE, etc.)")
-    parser.add_argument("--only", action="append", choices=["markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial", "indicators"], default=None, help="run only these datasets (repeatable)")
-    parser.add_argument("--skip-fetch", action="store_true", help="reuse already-downloaded files for markets")
+    parser.add_argument(
+        "--only",
+        action="append",
+        choices=[
+            "markets",
+            "economy",
+            "climate",
+            "demographics",
+            "agriculture",
+            "health",
+            "education",
+            "energy",
+            "water",
+            "transport",
+            "mining",
+            "governance",
+            "trade",
+            "labour",
+            "environment",
+            "poverty",
+            "ict",
+            "finance",
+            "tourism",
+            "aid",
+            "gender",
+            "geospatial",
+            "indicators",
+        ],
+        default=None,
+        help="run only these datasets (repeatable)",
+    )
+    parser.add_argument(
+        "--skip-fetch", action="store_true", help="reuse already-downloaded files for markets"
+    )
     parser.add_argument("--climate-admin1", nargs="*", default=None)
     parser.add_argument("--climate-start", default=None)
     args = parser.parse_args()
 
-    only = set(args.only) if args.only else {"markets", "economy", "climate", "demographics", "agriculture", "health", "education", "energy", "water", "transport", "mining", "governance", "trade", "labour", "environment", "poverty", "ict", "finance", "tourism", "aid", "gender", "geospatial", "indicators"}
+    only = (
+        set(args.only)
+        if args.only
+        else {
+            "markets",
+            "economy",
+            "climate",
+            "demographics",
+            "agriculture",
+            "health",
+            "education",
+            "energy",
+            "water",
+            "transport",
+            "mining",
+            "governance",
+            "trade",
+            "labour",
+            "environment",
+            "poverty",
+            "ict",
+            "finance",
+            "tourism",
+            "aid",
+            "gender",
+            "geospatial",
+            "indicators",
+        }
+    )
 
     if "markets" in only:
         from sokodata.datasets.markets.etl import run_etl as run_markets
@@ -46,7 +106,13 @@ def main() -> None:
         try:
             from sokodata.datasets.climate.etl import run_etl as run_climate
 
-            run_climate(args.data_dir, args.db, country=args.country, admin1_list=args.climate_admin1, start_date=args.climate_start)
+            run_climate(
+                args.data_dir,
+                args.db,
+                country=args.country,
+                admin1_list=args.climate_admin1,
+                start_date=args.climate_start,
+            )
         except Exception as e:
             log.warning("climate ETL failed (commons continues): %s", e)
     if "demographics" in only:

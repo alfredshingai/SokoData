@@ -56,6 +56,7 @@ def fetch_json(url: str, headers: dict | None = None) -> dict | list:
 # HTML table scraping - for RBZ, ZERA HTML pages
 # ---------------------------------------------------------------------------
 
+
 def fetch_html_tables(url: str, match: str | None = None) -> list[pd.DataFrame]:
     """Scrape HTML tables from a page.  Returns list of DataFrames.
 
@@ -88,6 +89,7 @@ def fetch_html_text(url: str) -> str | None:
 # ---------------------------------------------------------------------------
 # PDF table extraction - for ZIMSTAT CPI, ZERA fuel PDFs
 # ---------------------------------------------------------------------------
+
 
 def download_pdf(url: str, dest: Path) -> Path:
     """Download a PDF like ZIMSTAT CPI bulletin or ZERA schedule."""
@@ -150,6 +152,7 @@ def _expand_pages(pages: str) -> set[str]:
 
 # ZERA fuel example: HTML page often contains "Diesel 1.XX, Petrol 1.YY"
 FUEL_PRICE_RE = re.compile(r"(Diesel|Petrol|Blend|LP\s*Gas)[^\d]*(\d+\.\d{2,4})", re.I)
+
 
 def parse_fuel_text(html: str) -> list[dict]:
     """Quick regex fallback for fuel prices embedded in HTML text."""

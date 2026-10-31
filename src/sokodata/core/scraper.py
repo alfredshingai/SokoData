@@ -2,11 +2,8 @@
 
 import logging
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any
 
-from sokodata.core.queue import Task, complete, dequeue, enqueue, fail
-from sokodata.datasets.markets.store import connect as db_connect
+from sokodata.core.queue import complete, dequeue, enqueue, fail
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +27,6 @@ class BaseScraper(ABC):
 
     def run_worker(self, limit: int = 10) -> int:
         """Process pending tasks. Returns number of tasks processed."""
-        from sokodata.core.queue import Task, complete, dequeue, fail
-        from sokodata.datasets.markets.store import connect
 
         tasks = dequeue(self.db_path, limit=limit)
         processed = 0

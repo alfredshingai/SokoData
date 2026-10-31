@@ -26,7 +26,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +50,16 @@ def fetch_worldbank_gender(country: str = "ZW") -> pd.DataFrame:
     mat = _fetch_wdi_indicator("SH.STA.MMRT", "maternal_mortality_per_100k", country)
     dfs = [d for d in (parl, lfp, prim, mat) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "women_parliament_pct", "female_lfpr_pct", "primary_parity_index", "maternal_mortality_per_100k", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "women_parliament_pct",
+                "female_lfpr_pct",
+                "primary_parity_index",
+                "maternal_mortality_per_100k",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -57,7 +72,9 @@ def fetch_worldbank_gender(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_unwomen_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific UN Women scraper."""
-    tables = fetch_html_tables("https://data.unwomen.org/country/zimbabwe", match="Gender|Women|Parity|Maternal")
+    tables = fetch_html_tables(
+        "https://data.unwomen.org/country/zimbabwe", match="Gender|Women|Parity|Maternal"
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "UN Women HTML"})
@@ -73,7 +90,10 @@ def fetch_gender_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[s
         try:
             base = raw_dir or RAW_DIR
             pdf_path = Path(base) / "gender_stats.pdf"
-            download_pdf("https://www.zimstat.co.zw/wp-content/uploads/publications/Social/Gender_Statistics.pdf", pdf_path)
+            download_pdf(
+                "https://www.zimstat.co.zw/wp-content/uploads/publications/Social/Gender_Statistics.pdf",
+                pdf_path,
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-2")
             log.info("Gender PDF: %d tables", len(tables))
         except Exception as e:

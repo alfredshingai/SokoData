@@ -8,18 +8,45 @@ import pytest
 from sokodata.alerts import telegram
 
 MOVERS = [
-    {"market_id": 1, "market": "Marula", "commodity_id": 1, "commodity": "Fish (kapenta)",
-     "unit": "KG", "prev_date": "2026-01-15", "prev_usd": 6.1, "last_date": "2026-05-15",
-     "last_usd": 10.53, "pct_change": 72.62},
-    {"market_id": 2, "market": "Gokwe", "commodity_id": 2, "commodity": "Maize meal",
-     "unit": "KG", "prev_date": "2026-01-15", "prev_usd": 0.7, "last_date": "2026-05-15",
-     "last_usd": 0.63, "pct_change": -10.0},
+    {
+        "market_id": 1,
+        "market": "Marula",
+        "commodity_id": 1,
+        "commodity": "Fish (kapenta)",
+        "unit": "KG",
+        "prev_date": "2026-01-15",
+        "prev_usd": 6.1,
+        "last_date": "2026-05-15",
+        "last_usd": 10.53,
+        "pct_change": 72.62,
+    },
+    {
+        "market_id": 2,
+        "market": "Gokwe",
+        "commodity_id": 2,
+        "commodity": "Maize meal",
+        "unit": "KG",
+        "prev_date": "2026-01-15",
+        "prev_usd": 0.7,
+        "last_date": "2026-05-15",
+        "last_usd": 0.63,
+        "pct_change": -10.0,
+    },
 ]
 
 ANOMALIES = [
-    {"market_id": 3, "market": "Tongogara Refugee Camp 2", "commodity_id": 3,
-     "commodity": "Oil (vegetable)", "unit": "L", "date": "2026-05-15", "usdprice": 2.22,
-     "recent_median_usd": 1.51, "z": 47.89, "baseline_points": 10},
+    {
+        "market_id": 3,
+        "market": "Tongogara Refugee Camp 2",
+        "commodity_id": 3,
+        "commodity": "Oil (vegetable)",
+        "unit": "L",
+        "date": "2026-05-15",
+        "usdprice": 2.22,
+        "recent_median_usd": 1.51,
+        "z": 47.89,
+        "baseline_points": 10,
+    },
 ]
 
 

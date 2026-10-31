@@ -5,9 +5,18 @@ from unittest import mock
 from sokodata.alerts import telegram, whatsapp
 
 MOVERS = [
-    {"market_id": 1, "market": "Marula", "commodity_id": 1, "commodity": "Fish (kapenta)",
-     "unit": "KG", "prev_date": "2026-01-15", "prev_usd": 6.1, "last_date": "2026-05-15",
-     "last_usd": 10.53, "pct_change": 72.62},
+    {
+        "market_id": 1,
+        "market": "Marula",
+        "commodity_id": 1,
+        "commodity": "Fish (kapenta)",
+        "unit": "KG",
+        "prev_date": "2026-01-15",
+        "prev_usd": 6.1,
+        "last_date": "2026-05-15",
+        "last_usd": 10.53,
+        "pct_change": 72.62,
+    },
 ]
 
 WEBHOOK_PAYLOAD = {
@@ -17,10 +26,12 @@ WEBHOOK_PAYLOAD = {
                 {
                     "value": {
                         "messages": [
-                            {"from": "263771234567", "type": "text",
-                             "text": {"body": "prices"}},
-                            {"from": "263771234567", "type": "text",
-                             "text": {"body": " "}},  # blank -> dropped
+                            {"from": "263771234567", "type": "text", "text": {"body": "prices"}},
+                            {
+                                "from": "263771234567",
+                                "type": "text",
+                                "text": {"body": " "},
+                            },  # blank -> dropped
                         ],
                         "statuses": [{"status": "delivered"}],  # ignored
                     }
@@ -57,11 +68,17 @@ def test_build_reply_greets_newcomers():
 
 
 def test_build_reply_fetches_digest():
-    with mock.patch.object(telegram, "fetch_json", side_effect=lambda url: (
-        MOVERS if "movers" in url else
-        [] if "anomalies" in url else
-        {"coverage": {"last_date": "2026-05-15"}}
-    )):
+    with mock.patch.object(
+        telegram,
+        "fetch_json",
+        side_effect=lambda url: (
+            MOVERS
+            if "movers" in url
+            else []
+            if "anomalies" in url
+            else {"coverage": {"last_date": "2026-05-15"}}
+        ),
+    ):
         reply = whatsapp.build_reply("prices")
     assert "Fish (kapenta)" in reply and "+73%" in reply
 
@@ -71,9 +88,11 @@ def test_handle_webhook_replies_to_each_sender():
 
     def fake_fetch(url):
         return (
-            MOVERS if "movers" in url else
-            [] if "anomalies" in url else
-            {"coverage": {"last_date": "2026-05-15"}}
+            MOVERS
+            if "movers" in url
+            else []
+            if "anomalies" in url
+            else {"coverage": {"last_date": "2026-05-15"}}
         )
 
     def fake_send(token, phone_id, to, txt):

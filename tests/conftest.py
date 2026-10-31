@@ -15,10 +15,24 @@ FIXTURES = Path(__file__).parent / "fixtures"
 # Real market_ids for the fixture rows (Chiredzi Urban, Tongogara Refugee Camp 2)
 SAMPLE_MARKETS = pd.DataFrame(
     [
-        {"market_id": 5532, "market": "Chiredzi Urban", "countryiso3": "ZWE",
-         "admin1": "Masvingo", "admin2": "Chiredzi", "latitude": -21.05, "longitude": 31.60},
-        {"market_id": 5065, "market": "Tongogara Refugee Camp 2", "countryiso3": "ZWE",
-         "admin1": "Manicaland", "admin2": "Chipinge", "latitude": -21.07, "longitude": 32.42},
+        {
+            "market_id": 5532,
+            "market": "Chiredzi Urban",
+            "countryiso3": "ZWE",
+            "admin1": "Masvingo",
+            "admin2": "Chiredzi",
+            "latitude": -21.05,
+            "longitude": 31.60,
+        },
+        {
+            "market_id": 5065,
+            "market": "Tongogara Refugee Camp 2",
+            "countryiso3": "ZWE",
+            "admin1": "Manicaland",
+            "admin2": "Chipinge",
+            "latitude": -21.07,
+            "longitude": 32.42,
+        },
     ]
 )
 

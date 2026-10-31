@@ -19,14 +19,24 @@ def geospatial_boundaries(request: Request):
 def markets_geojson(request: Request):
     """Return market locations as GeoJSON FeatureCollection (from markets table)."""
     try:
-        rows = request.app.state.conn.execute("SELECT market_id, market, admin1, admin2, latitude, longitude FROM markets WHERE latitude IS NOT NULL AND longitude IS NOT NULL").fetchall()
+        rows = request.app.state.conn.execute(
+            "SELECT market_id, market, admin1, admin2, latitude, longitude "
+            "FROM markets WHERE latitude IS NOT NULL AND longitude IS NOT NULL"
+        ).fetchall()
     except Exception:
         return {"type": "FeatureCollection", "features": []}
     features = []
     for r in rows:
-        features.append({
-            "type": "Feature",
-            "properties": {"market_id": r["market_id"], "market": r["market"], "admin1": r["admin1"], "admin2": r["admin2"]},
-            "geometry": {"type": "Point", "coordinates": [r["longitude"], r["latitude"]]},
-        })
+        features.append(
+            {
+                "type": "Feature",
+                "properties": {
+                    "market_id": r["market_id"],
+                    "market": r["market"],
+                    "admin1": r["admin1"],
+                    "admin2": r["admin2"],
+                },
+                "geometry": {"type": "Point", "coordinates": [r["longitude"], r["latitude"]]},
+            }
+        )
     return {"type": "FeatureCollection", "features": features}

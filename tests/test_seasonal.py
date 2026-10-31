@@ -78,8 +78,17 @@ def test_anomalies_skips_stale_series():
     rows.append(("2025-01-15", 1, "A", 10, "Maize", 3.0, "aggregate"))
     # a different series still reporting at the global newest date
     for month in range(1, 13):
-        rows.append((f"2025-{month:02d}-15" if month < 12 else "2025-12-15",
-                     2, "B", 10, "Maize", 1.0 + 0.01 * (month % 2), "aggregate"))
+        rows.append(
+            (
+                f"2025-{month:02d}-15" if month < 12 else "2025-12-15",
+                2,
+                "B",
+                10,
+                "Maize",
+                1.0 + 0.01 * (month % 2),
+                "aggregate",
+            )
+        )
 
     result = anomalies(make_df(rows), threshold=2.0)
     assert all(r["market_id"] == 2 for r in result)
@@ -96,8 +105,7 @@ def test_anomalies_ignores_insufficient_baseline():
 def test_anomalies_ignores_flat_history():
     # constant history -> MAD = 0 -> z is undefined, series must be skipped
     rows = [
-        (f"2024-{month:02d}-15", 1, "A", 10, "Maize", 1.0, "aggregate")
-        for month in range(1, 13)
+        (f"2024-{month:02d}-15", 1, "A", 10, "Maize", 1.0, "aggregate") for month in range(1, 13)
     ]
     rows.append(("2025-01-15", 1, "A", 10, "Maize", 3.0, "aggregate"))
     assert anomalies(make_df(rows)) == []

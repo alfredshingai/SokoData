@@ -21,7 +21,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 log = logging.getLogger(__name__)
 
 
-def run_etl(data_dir: Path, db_path: Path, *, skip_fetch: bool = False, country: str = "ZW") -> tuple[int, int]:
+def run_etl(
+    data_dir: Path, db_path: Path, *, skip_fetch: bool = False, country: str = "ZW"
+) -> tuple[int, int]:
     if skip_fetch:
         prices_path = data_dir / f"wfp_food_prices_{country.lower()}.csv"
         markets_path = data_dir / f"wfp_markets_{country.lower()}.csv"

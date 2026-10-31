@@ -1,6 +1,7 @@
 """Fetch health data for a country.
 
-* World Bank WDI (open JSON, CC BY-4.0) - SP.DYN.IMRT.IN, SH.DYN.MORT, SH.IMM.MEAS, SH.MED.BEDS.ZS, SH.XPD.CHEX.GD.ZS
+* World Bank WDI (open JSON, CC BY-4.0) - SP.DYN.IMRT.IN, SH.DYN.MORT, SH.IMM.MEAS,
+  SH.MED.BEDS.ZS, SH.XPD.CHEX.GD.ZS
 * WHO GHO API fallback (open JSON) - optional
 * Country-specific MoH scrapers - degrade gracefully.
 """
@@ -26,7 +27,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +51,16 @@ def fetch_worldbank_health(country: str = "ZW") -> pd.DataFrame:
     xpd = _fetch_wdi_indicator("SH.XPD.CHEX.GD.ZS", "health_xpd_pct_gdp", country)
     dfs = [d for d in (imrt, u5, meas, xpd) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "infant_mort_per_1k", "under5_mort_per_1k", "measles_imm_pct", "health_xpd_pct_gdp", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "infant_mort_per_1k",
+                "under5_mort_per_1k",
+                "measles_imm_pct",
+                "health_xpd_pct_gdp",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -75,7 +91,9 @@ def fetch_health_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[s
         try:
             base = raw_dir or RAW_DIR
             pdf_path = Path(base) / "moh_bulletin.pdf"
-            download_pdf("https://www.mohcc.gov.zw/wp-content/uploads/Health_Bulletin.pdf", pdf_path)
+            download_pdf(
+                "https://www.mohcc.gov.zw/wp-content/uploads/Health_Bulletin.pdf", pdf_path
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-2")
             log.info("MoH PDF: %d tables", len(tables))
         except Exception as e:

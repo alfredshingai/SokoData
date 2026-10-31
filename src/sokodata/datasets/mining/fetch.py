@@ -27,7 +27,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +50,15 @@ def fetch_worldbank_mining(country: str = "ZW") -> pd.DataFrame:
     fuel = _fetch_wdi_indicator("TX.VAL.FUEL.ZS.UN", "fuel_exports_pct", country)
     dfs = [d for d in (rents, ore, fuel) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "mineral_rents_pct_gdp", "ore_metal_exports_pct", "fuel_exports_pct", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "mineral_rents_pct_gdp",
+                "ore_metal_exports_pct",
+                "fuel_exports_pct",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -57,7 +71,10 @@ def fetch_worldbank_mining(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_chamber_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific Chamber/RBZ scraper."""
-    tables = fetch_html_tables("https://www.chamberofminesofzimbabwe.com/", match="Gold|Platinum|Lithium|Production|Deliveries")
+    tables = fetch_html_tables(
+        "https://www.chamberofminesofzimbabwe.com/",
+        match="Gold|Platinum|Lithium|Production|Deliveries",
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "Chamber HTML"})

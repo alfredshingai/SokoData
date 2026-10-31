@@ -33,7 +33,9 @@ def init_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def load_tables(conn: sqlite3.Connection, annual: pd.DataFrame, fao_maize: pd.DataFrame) -> dict[str, int]:
+def load_tables(
+    conn: sqlite3.Connection, annual: pd.DataFrame, fao_maize: pd.DataFrame
+) -> dict[str, int]:
     init_schema(conn)
     for df in (annual, fao_maize):
         if not df.empty and "date" in df.columns:

@@ -437,10 +437,11 @@ COUNTRIES = {
     },
 }
 
+
 def get_country_config(country: str = DEFAULT_COUNTRY) -> dict:
     """Get configuration for a specific country."""
     # Handle Path objects passed by mistake
-    if hasattr(country, 'name'):
+    if hasattr(country, "name"):
         country = str(country)
     return COUNTRIES.get(country.upper(), COUNTRIES[DEFAULT_COUNTRY])
 

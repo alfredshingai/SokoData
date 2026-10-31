@@ -26,7 +26,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -43,7 +49,15 @@ def fetch_worldbank_tourism(country: str = "ZW") -> pd.DataFrame:
     xpnd = _fetch_wdi_indicator("ST.INT.XPND.CD", "tourism_expenditure_usd", country)
     dfs = [d for d in (arr, rcpt, xpnd) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "tourist_arrivals", "tourism_receipts_usd", "tourism_expenditure_usd", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "tourist_arrivals",
+                "tourism_receipts_usd",
+                "tourism_expenditure_usd",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -56,7 +70,9 @@ def fetch_worldbank_tourism(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_zta_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific ZTA scraper."""
-    tables = fetch_html_tables("https://www.zimbabwetourism.net/", match="Tourist|Arrival|Receipt|Victoria|Falls")
+    tables = fetch_html_tables(
+        "https://www.zimbabwetourism.net/", match="Tourist|Arrival|Receipt|Victoria|Falls"
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "ZTA HTML"})
@@ -72,7 +88,10 @@ def fetch_tourism_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[
         try:
             base = raw_dir or RAW_DIR
             pdf_path = Path(base) / "zta_stats.pdf"
-            download_pdf("https://www.zimbabwetourism.net/wp-content/uploads/Tourism_Statistics.pdf", pdf_path)
+            download_pdf(
+                "https://www.zimbabwetourism.net/wp-content/uploads/Tourism_Statistics.pdf",
+                pdf_path,
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-2")
             log.info("ZTA PDF: %d tables", len(tables))
         except Exception as e:

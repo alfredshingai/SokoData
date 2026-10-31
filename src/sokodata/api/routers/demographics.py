@@ -11,7 +11,10 @@ def demo_annual(
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ):
-    sql = "SELECT date, population, pop_growth_pct, urban_pct, source FROM demo_annual ORDER BY date DESC LIMIT ? OFFSET ?"
+    sql = (
+        "SELECT date, population, pop_growth_pct, urban_pct, source FROM demo_annual ORDER BY "
+        "date DESC LIMIT ? OFFSET ?"
+    )
     try:
         rows = request.app.state.conn.execute(sql, (limit, offset)).fetchall()
     except Exception:

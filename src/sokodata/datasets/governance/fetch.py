@@ -29,7 +29,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -48,7 +54,17 @@ def fetch_worldbank_governance(country: str = "ZW") -> pd.DataFrame:
     debt = _fetch_wdi_indicator("GC.DOD.TOTL.GD.ZS", "gov_debt_pct_gdp", country)
     dfs = [d for d in (prop, tran, women, mil, debt) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "property_rights_cpia", "transparency_cpia", "women_parliament_pct", "military_xpd_pct_gdp", "gov_debt_pct_gdp", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "property_rights_cpia",
+                "transparency_cpia",
+                "women_parliament_pct",
+                "military_xpd_pct_gdp",
+                "gov_debt_pct_gdp",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -61,12 +77,17 @@ def fetch_worldbank_governance(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_zec_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific ZEC/Afrobarometer scraper."""
-    tables = fetch_html_tables("https://www.zec.org.zw/", match="Election|Results|Votes|Constituency|Ward")
+    tables = fetch_html_tables(
+        "https://www.zec.org.zw/", match="Election|Results|Votes|Constituency|Ward"
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "ZEC HTML"})
     try:
-        afro = fetch_html_tables("https://www.afrobarometer.org/countries/zimbabwe/", match="Zimbabwe|Survey|Democracy|Trust")
+        afro = fetch_html_tables(
+            "https://www.afrobarometer.org/countries/zimbabwe/",
+            match="Zimbabwe|Survey|Democracy|Trust",
+        )
         for tbl in afro:
             rows.append({"raw": tbl.head(2).to_string(), "source": "Afrobarometer HTML"})
     except Exception:
@@ -76,7 +97,9 @@ def fetch_zec_html(raw_dir: Path | None = None) -> pd.DataFrame:
     return df
 
 
-def fetch_governance_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[str, pd.DataFrame]:
+def fetch_governance_all(
+    country: str = "ZW", raw_dir: Path | None = None
+) -> dict[str, pd.DataFrame]:
     wdi = fetch_worldbank_governance(country)
     if country == "ZW":
         html = fetch_zec_html(raw_dir)

@@ -26,7 +26,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +50,16 @@ def fetch_worldbank_poverty(country: str = "ZW") -> pd.DataFrame:
     bot = _fetch_wdi_indicator("SI.DST.05TH.20", "bottom40_growth_pct", country)
     dfs = [d for d in (dday, gini, nahc, bot) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "extreme_poverty_pct", "gini_index", "national_poverty_pct", "bottom40_growth_pct", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "extreme_poverty_pct",
+                "gini_index",
+                "national_poverty_pct",
+                "bottom40_growth_pct",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -73,7 +88,10 @@ def fetch_poverty_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[
         try:
             base = raw_dir or RAW_DIR
             pdf_path = Path(base) / "pices.pdf"
-            download_pdf("https://www.zimstat.co.zw/wp-content/uploads/publications/Economic/Poverty/PICES.pdf", pdf_path)
+            download_pdf(
+                "https://www.zimstat.co.zw/wp-content/uploads/publications/Economic/Poverty/PICES.pdf",
+                pdf_path,
+            )
             tables = extract_pdf_tables(pdf_path, pages="1-2")
             log.info("PICES PDF: %d tables", len(tables))
         except Exception as e:

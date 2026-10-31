@@ -27,7 +27,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in records:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {indicator} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {indicator} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -62,11 +68,15 @@ def fetch_zimstat_census_html(raw_dir: Path | None = None) -> pd.DataFrame:
     Returns [admin1, population, male, female, source] if tables found,
     else empty DF. Zimbabwe-specific.
     """
-    tables = fetch_html_tables("https://www.zimstat.co.zw/census-2022/", match="Province|Harare|Population")
+    tables = fetch_html_tables(
+        "https://www.zimstat.co.zw/census-2022/", match="Province|Harare|Population"
+    )
     rows = []
     for tbl in tables:
         cols = [str(c).strip().lower() for c in tbl.columns]
-        if any("province" in c or "district" in c for c in cols) and any("pop" in c or "total" in c for c in cols):
+        if any("province" in c or "district" in c for c in cols) and any(
+            "pop" in c or "total" in c for c in cols
+        ):
             for _, r in tbl.iterrows():
                 vals = [str(v).strip() for v in r.values]
                 if not vals[0] or vals[0].lower() in ("total", "province", "nan"):
@@ -79,7 +89,9 @@ def fetch_zimstat_census_html(raw_dir: Path | None = None) -> pd.DataFrame:
                         except Exception:
                             pass
                     if nums:
-                        rows.append({"admin1": vals[0], "population": nums[0], "source": "ZIMSTAT HTML"})
+                        rows.append(
+                            {"admin1": vals[0], "population": nums[0], "source": "ZIMSTAT HTML"}
+                        )
                 except Exception:
                     continue
     df = pd.DataFrame(rows)
@@ -91,19 +103,32 @@ def fetch_zimstat_census_pdf(raw_dir: Path | None = None) -> pd.DataFrame:
     base = raw_dir or RAW_DIR
     try:
         pdf_path = Path(base) / "zimstat_census2022.pdf"
-        download_pdf("https://www.zimstat.co.zw/wp-content/uploads/publications/Population/Census2022_Population_Table.pdf", pdf_path)
+        download_pdf(
+            "https://www.zimstat.co.zw/wp-content/uploads/publications/Population/Census2022_Population_Table.pdf",
+            pdf_path,
+        )
         tables = extract_pdf_tables(pdf_path, pages="1-5")
         rows = []
         for tbl in tables:
             tbl.columns = [str(c).strip().lower() for c in tbl.columns]
-            if any("province" in c or "district" in c for c in tbl.columns) and any("pop" in c for c in tbl.columns):
+            if any("province" in c or "district" in c for c in tbl.columns) and any(
+                "pop" in c for c in tbl.columns
+            ):
                 for _, r in tbl.iterrows():
                     d = {k: str(v).strip() for k, v in r.items()}
-                    prov = next((d[c] for c in tbl.columns if "province" in c or "district" in c), None)
+                    prov = next(
+                        (d[c] for c in tbl.columns if "province" in c or "district" in c), None
+                    )
                     pop = next((d[c] for c in tbl.columns if "pop" in c or "total" in c), None)
                     if prov and pop:
                         try:
-                            rows.append({"admin1": prov, "population": float(pop.replace(",", "")), "source": "ZIMSTAT PDF"})
+                            rows.append(
+                                {
+                                    "admin1": prov,
+                                    "population": float(pop.replace(",", "")),
+                                    "source": "ZIMSTAT PDF",
+                                }
+                            )
                         except Exception:
                             continue
         df = pd.DataFrame(rows)
@@ -114,7 +139,9 @@ def fetch_zimstat_census_pdf(raw_dir: Path | None = None) -> pd.DataFrame:
         return pd.DataFrame(columns=["admin1", "population", "source"])
 
 
-def fetch_demographics_all(country: str = "ZW", raw_dir: Path | None = None) -> dict[str, pd.DataFrame]:
+def fetch_demographics_all(
+    country: str = "ZW", raw_dir: Path | None = None
+) -> dict[str, pd.DataFrame]:
     """Fetch all demographics sources for a country."""
     wdi = fetch_worldbank_demographics(country)
     # Zimbabwe-specific census scrapers

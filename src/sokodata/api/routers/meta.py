@@ -1,6 +1,6 @@
 """Meta endpoints for platform health and freshness."""
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Request
 
 router = APIRouter(tags=["meta"])
 
@@ -54,7 +54,11 @@ def freshness(request: Request):
             else:
                 result[table] = {"last_date": None, "row_count": 0}
         except Exception:
-            result[table] = {"last_date": None, "row_count": 0, "error": "table not found or no date column"}
+            result[table] = {
+                "last_date": None,
+                "row_count": 0,
+                "error": "table not found or no date column",
+            }
     return result
 
 

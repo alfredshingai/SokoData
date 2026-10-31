@@ -12,10 +12,13 @@ def test_load_and_read_back(test_db, raw_prices):
         assert n == len(clean_prices(raw_prices))
         assert m == 2
         # natural key is enforced
-        assert conn.execute(
-            "SELECT COUNT(*) FROM (SELECT DISTINCT date, market_id, commodity_id,"
-            " pricetype, priceflag FROM prices)"
-        ).fetchone()[0] == n
+        assert (
+            conn.execute(
+                "SELECT COUNT(*) FROM (SELECT DISTINCT date, market_id, commodity_id,"
+                " pricetype, priceflag FROM prices)"
+            ).fetchone()[0]
+            == n
+        )
     finally:
         conn.close()
 

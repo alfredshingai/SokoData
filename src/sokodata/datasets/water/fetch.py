@@ -26,7 +26,13 @@ def _fetch_wdi_indicator(indicator: str, col: str, country: str) -> pd.DataFrame
         for r in recs:
             if r.get("value") is None or r.get("date") is None:
                 continue
-            rows.append({"date": f"{r['date']}-12-31", col: float(r["value"]), "source": f"WDI {col} ({country})"})
+            rows.append(
+                {
+                    "date": f"{r['date']}-12-31",
+                    col: float(r["value"]),
+                    "source": f"WDI {col} ({country})",
+                }
+            )
         df = pd.DataFrame(rows)
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
@@ -44,7 +50,16 @@ def fetch_worldbank_water(country: str = "ZW") -> pd.DataFrame:
     basic_s = _fetch_wdi_indicator("SH.STA.BASS.ZS", "basic_sanitation_pct", country)
     dfs = [d for d in (safe_w, safe_s, basic_w, basic_s) if not d.empty]
     if not dfs:
-        return pd.DataFrame(columns=["date", "safe_water_pct", "safe_sanitation_pct", "basic_water_pct", "basic_sanitation_pct", "source"])
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "safe_water_pct",
+                "safe_sanitation_pct",
+                "basic_water_pct",
+                "basic_sanitation_pct",
+                "source",
+            ]
+        )
     out = dfs[0]
     for df in dfs[1:]:
         out = out.merge(df, on="date", how="outer", suffixes=("", "_y"))
@@ -57,7 +72,9 @@ def fetch_worldbank_water(country: str = "ZW") -> pd.DataFrame:
 
 def fetch_zinwa_html(raw_dir: Path | None = None) -> pd.DataFrame:
     """Zimbabwe-specific ZINWA scraper."""
-    tables = fetch_html_tables("https://www.zinwa.co.zw/", match="Dam|Level|Water|Supply|Harare|Kariba")
+    tables = fetch_html_tables(
+        "https://www.zinwa.co.zw/", match="Dam|Level|Water|Supply|Harare|Kariba"
+    )
     rows = []
     for tbl in tables:
         rows.append({"raw": tbl.head(2).to_string(), "source": "ZINWA HTML"})

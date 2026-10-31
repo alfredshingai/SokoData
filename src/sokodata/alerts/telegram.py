@@ -41,8 +41,11 @@ def _markup(markup: str):
 
 
 def format_digest(
-    movers: list[dict], anomalies: list[dict], date_iso: str | None = None,
-    *, markup: str = "html",
+    movers: list[dict],
+    anomalies: list[dict],
+    date_iso: str | None = None,
+    *,
+    markup: str = "html",
 ) -> str:
     """Render the digest message. HTML mode for Telegram; WhatsApp mode uses
     *bold* / _italic_ and no HTML entities. Escapes all data fields."""
@@ -61,7 +64,7 @@ def format_digest(
             lines.append(
                 f"• {bold(esc(m['commodity']))} at {esc(m['market'])}: "
                 f"${m['prev_usd']:,.2f} → ${m['last_usd']:,.2f} / {esc(m['unit'])} "
-                f"({bold(f'{m['pct_change']:+.0f}%')})"
+                f"({bold(f'{m["pct_change"]:+.0f}%')})"
             )
         lines.append("")
 

@@ -34,7 +34,7 @@ def economy_cpi(
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
 ):
-    sql = "SELECT date, cpi, inflation_yoy, inflation_mom, source FROM economy_cpi ORDER BY date DESC LIMIT ? OFFSET ?"
+    sql = "SELECT date, rate, source FROM economy_rates"
     try:
         rows = request.app.state.conn.execute(sql, (limit, offset)).fetchall()
     except Exception:

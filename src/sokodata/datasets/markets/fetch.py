@@ -5,7 +5,7 @@ import shutil
 import urllib.request
 from pathlib import Path
 
-from sokodata.config import RAW_DIR, REQUEST_TIMEOUT, USER_AGENT, get_prices_url, get_markets_url
+from sokodata.config import RAW_DIR, REQUEST_TIMEOUT, USER_AGENT, get_markets_url, get_prices_url
 
 log = logging.getLogger(__name__)
 

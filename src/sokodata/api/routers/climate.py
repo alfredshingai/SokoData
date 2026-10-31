@@ -24,7 +24,10 @@ def climate_daily(
     if end:
         clauses.append("date <= ?")
         params.append(end)
-    sql = "SELECT date, admin1, latitude, longitude, tmean_c, tmax_c, tmin_c, precip_mm, source FROM climate_daily"
+    sql = (
+        "SELECT date, admin1, latitude, longitude, tmean_c, tmax_c, tmin_c, precip_mm, source "
+        "FROM climate_daily"
+    )
     if clauses:
         sql += " WHERE " + " AND ".join(clauses)
     sql += " ORDER BY date DESC LIMIT ? OFFSET ?"
@@ -47,7 +50,10 @@ def climate_monthly(
     if admin1:
         clauses.append("admin1 = ?")
         params.append(admin1)
-    sql = "SELECT date, admin1, latitude, longitude, tmean_c, tmax_c, tmin_c, precip_mm, source FROM climate_monthly"
+    sql = (
+        "SELECT date, admin1, latitude, longitude, tmean_c, tmax_c, tmin_c, precip_mm, source "
+        "FROM climate_monthly"
+    )
     if clauses:
         sql += " WHERE " + " AND ".join(clauses)
     sql += " ORDER BY date DESC LIMIT ? OFFSET ?"

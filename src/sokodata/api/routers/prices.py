@@ -29,7 +29,9 @@ def _require_commodity(df, commodity_id: int) -> None:
 @router.get("/prices", response_model=list[PricePoint])
 def price_series(
     request: Request,
-    country: str | None = Query(default=None, max_length=3, description="Country ISO3 code (ZW, KE)"),
+    country: str | None = Query(
+        default=None, max_length=3, description="Country ISO3 code (ZW, KE)"
+    ),
     market_id: int | None = Query(default=None),
     commodity_id: int | None = Query(default=None),
     start: Date | None = Query(default=None, description="Inclusive start date (YYYY-MM-DD)"),
@@ -74,7 +76,9 @@ def price_series(
 @router.get("/prices/latest", response_model=list[PricePoint])
 def latest_prices(
     request: Request,
-    country: str | None = Query(default=None, max_length=3, description="Country ISO3 code (ZW, KE)"),
+    country: str | None = Query(
+        default=None, max_length=3, description="Country ISO3 code (ZW, KE)"
+    ),
     commodity_id: int | None = Query(default=None, description="Omit for all commodities"),
     market_id: int | None = Query(default=None),
     limit: int = Query(default=500, ge=1, le=2000),

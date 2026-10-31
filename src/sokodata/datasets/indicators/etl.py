@@ -7,13 +7,15 @@ from pathlib import Path
 from sokodata.config import DB_PATH, RAW_DIR
 from sokodata.datasets.indicators.clean import clean_annual
 from sokodata.datasets.indicators.fetch import fetch_indicators_all
-from sokodata.datasets.indicators.store import connect, init_schema, load_annual
+from sokodata.datasets.indicators.store import connect, load_annual
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger(__name__)
 
 
-def run_etl(data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW") -> dict[str, int]:
+def run_etl(
+    data_dir: Path = RAW_DIR, db_path: Path = DB_PATH, *, country: str = "ZW"
+) -> dict[str, int]:
     raw = fetch_indicators_all(country=country, raw_dir=data_dir)
     annual = clean_annual(raw["annual"])
     conn = connect(db_path)

@@ -22,7 +22,9 @@ def run_etl(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> dict[str, int]:
-    raw = fetch_climate_all(data_dir, country=country, admin1_list=admin1_list, start_date=start_date, end_date=end_date)
+    raw = fetch_climate_all(
+        data_dir, country=country, admin1_list=admin1_list, start_date=start_date, end_date=end_date
+    )
     daily = clean_climate(raw)
     monthly = to_monthly(daily)
 
@@ -44,7 +46,14 @@ def main() -> None:
     parser.add_argument("--start", default=None)
     parser.add_argument("--end", default=None)
     args = parser.parse_args()
-    run_etl(args.data_dir, args.db, country=args.country, admin1_list=args.admin1, start_date=args.start, end_date=args.end)
+    run_etl(
+        args.data_dir,
+        args.db,
+        country=args.country,
+        admin1_list=args.admin1,
+        start_date=args.start,
+        end_date=args.end,
+    )
 
 
 if __name__ == "__main__":

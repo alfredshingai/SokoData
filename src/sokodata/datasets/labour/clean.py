@@ -12,7 +12,12 @@ def clean_annual(df: pd.DataFrame) -> pd.DataFrame:
         return df
     out = df.copy()
     out["date"] = pd.to_datetime(out["date"], errors="coerce")
-    for c in ("unemployment_pct", "unemployment_national_pct", "labour_force_participation_pct", "vulnerable_employment_pct"):
+    for c in (
+        "unemployment_pct",
+        "unemployment_national_pct",
+        "labour_force_participation_pct",
+        "vulnerable_employment_pct",
+    ):
         if c in out.columns:
             out[c] = pd.to_numeric(out[c], errors="coerce")
     out["source"] = out["source"].astype("string").str.strip()
