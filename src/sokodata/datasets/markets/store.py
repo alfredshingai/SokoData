@@ -61,6 +61,8 @@ def connect(
         conn = sqlite3.connect(path, check_same_thread=check_same_thread)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # The background warehouse refresh writes while the app reads.
+    conn.execute("PRAGMA busy_timeout = 10000")
     return conn
 
 

@@ -28,23 +28,70 @@ DATASETS = [
 ]
 
 
-def _run_one(name: str, args: argparse.Namespace, country: str) -> dict:
+def _run_one(
+    name: str,
+    *,
+    data_dir: Path,
+    db: Path,
+    country: str,
+    skip_fetch: bool = False,
+    climate_admin1: list[str] | None = None,
+    climate_start: str | None = None,
+) -> dict:
     if name == "markets":
         from sokodata.datasets.markets.etl import run_etl
 
-        return run_etl(args.data_dir, args.db, skip_fetch=args.skip_fetch, country=country)
+        return run_etl(data_dir, db, skip_fetch=skip_fetch, country=country)
     if name == "climate":
         from sokodata.datasets.climate.etl import run_etl
 
         return run_etl(
-            args.data_dir,
-            args.db,
+            data_dir,
+            db,
             country=country,
-            admin1_list=args.climate_admin1,
-            start_date=args.climate_start,
+            admin1_list=climate_admin1,
+            start_date=climate_start,
         )
     module = importlib.import_module(f"sokodata.datasets.{name}.etl")
-    return module.run_etl(args.data_dir, args.db, country=country)
+    return module.run_etl(data_dir, db, country=country)
+
+
+def run_selected(
+    datasets: set[str],
+    countries: list[str],
+    *,
+    data_dir: Path = RAW_DIR,
+    db: Path = DB_PATH,
+    skip_fetch: bool = False,
+    climate_admin1: list[str] | None = None,
+    climate_start: str | None = None,
+) -> tuple[int, dict[str, str]]:
+    """Run the given datasets for the given countries.
+
+    Returns (runs_ok, failures) where failures maps "dataset/country" to the
+    error. A failing dataset never raises; callers decide the exit code.
+    """
+    failures: dict[str, str] = {}
+    ran = 0
+    for country in countries:
+        for name in DATASETS:
+            if name not in datasets:
+                continue
+            try:
+                _run_one(
+                    name,
+                    data_dir=data_dir,
+                    db=db,
+                    country=country,
+                    skip_fetch=skip_fetch,
+                    climate_admin1=climate_admin1,
+                    climate_start=climate_start,
+                )
+                ran += 1
+            except Exception as e:
+                failures[f"{name}/{country}"] = str(e)
+                log.warning("%s ETL failed for %s (commons continues): %s", name, country, e)
+    return ran, failures
 
 
 def main() -> int:
@@ -85,18 +132,15 @@ def main() -> int:
         countries = [args.country.upper()]
         datasets = set(args.only) if args.only else set(DATASETS)
 
-    failures: dict[str, str] = {}
-    ran = 0
-    for country in countries:
-        for name in DATASETS:
-            if name not in datasets:
-                continue
-            try:
-                _run_one(name, args, country)
-                ran += 1
-            except Exception as e:
-                failures[f"{name}/{country}"] = str(e)
-                log.warning("%s ETL failed for %s (commons continues): %s", name, country, e)
+    ran, failures = run_selected(
+        datasets,
+        countries,
+        data_dir=args.data_dir,
+        db=args.db,
+        skip_fetch=args.skip_fetch,
+        climate_admin1=args.climate_admin1,
+        climate_start=args.climate_start,
+    )
 
     if failures:
         log.warning("commons ETL summary: %d ok, %d FAILED: %s", ran, len(failures), failures)

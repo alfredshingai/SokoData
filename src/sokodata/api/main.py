@@ -79,10 +79,24 @@ def create_app(db_path: Path | str | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        conn = connect(path, read_only=True, check_same_thread=False)
+        try:
+            conn = connect(path, read_only=True, check_same_thread=False)
+        except FileNotFoundError:
+            # Boot with an empty warehouse (e.g. sokodata.boot fills it in the
+            # background) instead of refusing to serve at all.
+            from sokodata.datasets.markets.store import init_schema
+
+            log.warning("database not found at %s; starting with an empty warehouse", path)
+            conn = connect(path, check_same_thread=False)
+            try:
+                init_schema(conn)
+            finally:
+                conn.close()
+            conn = connect(path, read_only=True, check_same_thread=False)
         try:
             app.state.conn = conn
             app.state.prices = load_prices_frame(conn)
+            app.state.refresher = lambda: load_prices_frame(conn)
             log.info("loaded %d price rows from %s", len(app.state.prices), path)
         except Exception:
             conn.close()
