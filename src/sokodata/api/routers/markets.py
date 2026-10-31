@@ -25,8 +25,18 @@ def list_markets(
     )
     params = []
     if country:
-        sql += " WHERE country = ?"
-        params.append(country.upper())
+        # Accept ISO2 (ZW) or ISO3 (ZWE); the warehouse stores ISO3 in countryiso3
+        # while `country` holds the full name, so filter on the ISO3 column.
+        code = country.upper()
+        if len(code) == 2:
+            from sokodata.config import get_country_config
+
+            try:
+                code = get_country_config(code)["iso3"]
+            except ValueError:
+                pass
+        sql += " WHERE countryiso3 = ?"
+        params.append(code)
     sql += " ORDER BY market LIMIT ? OFFSET ?"
     params.extend([limit, offset])
     rows = request.app.state.conn.execute(sql, params).fetchall()
