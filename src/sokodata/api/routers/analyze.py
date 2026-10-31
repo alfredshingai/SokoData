@@ -404,15 +404,44 @@ def detect_anomalies(
                 status_code=400, detail=f"Column {column} not found in table {table}"
             )
 
-        # Use the existing anomaly detection from seasonal module
-        anomaly_rows = anomalies(df, threshold=threshold)
+        values = pd.to_numeric(df[column], errors="coerce").dropna()
+        if len(values) < 10:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Need at least 10 numeric values in {table}.{column}, got {len(values)}",
+            )
+
+        # Robust z-score: 0.6745 * (x - median) / MAD. Tolerates the
+        # outlier-heavy tails of economic time series better than mean/std.
+        median = values.median()
+        mad = (values - median).abs().median()
+        if mad == 0:
+            robust_z = pd.Series(0.0, index=values.index)
+        else:
+            robust_z = 0.6745 * (values - median) / mad
+
+        flagged = robust_z[robust_z.abs() >= threshold]
+        flagged = flagged.reindex(flagged.abs().sort_values(ascending=False).index).head(50)
+        anomalies_out = []
+        for idx, z in flagged.items():
+            row = {}
+            for k, v in df.loc[idx].items():
+                if isinstance(v, Date):
+                    v = v.isoformat()
+                elif hasattr(v, "item"):
+                    v = v.item()  # numpy scalar -> native Python for JSON
+                row[k] = v
+            row["robust_z"] = round(float(z), 2)
+            anomalies_out.append(row)
 
         return {
             "table": table,
             "column": column,
             "threshold": threshold,
-            "anomaly_count": len(anomaly_rows),
-            "anomalies": anomaly_rows,
+            "n_values": int(len(values)),
+            "median": float(median),
+            "anomaly_count": len(anomalies_out),
+            "anomalies": anomalies_out,
         }
     except HTTPException:
         raise
