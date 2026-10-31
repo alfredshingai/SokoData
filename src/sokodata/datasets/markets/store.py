@@ -97,8 +97,17 @@ def load_tables(
     price_rows = prices[storage_cols]
     init_schema(conn)
     try:
-        conn.execute("DELETE FROM prices")
-        conn.execute("DELETE FROM markets")
+        # Replace only this country's rows so a multi-country load accumulates
+        # instead of each country wiping the previous one.
+        codes = sorted({str(c) for c in markets["countryiso3"].dropna().unique()})
+        if codes:
+            qmarks = ",".join("?" * len(codes))
+            conn.execute(
+                f"DELETE FROM prices WHERE market_id IN "
+                f"(SELECT market_id FROM markets WHERE countryiso3 IN ({qmarks}))",
+                codes,
+            )
+            conn.execute(f"DELETE FROM markets WHERE countryiso3 IN ({qmarks})", codes)
         markets.to_sql("markets", conn, if_exists="append", index=False)
         price_rows.to_sql("prices", conn, if_exists="append", index=False)
         conn.commit()
