@@ -1,6 +1,6 @@
 # SokoData 🌾
 
-**Open Data Commons for African food markets.** Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial — one API, built entirely on open data, serving 30+ African countries.
+**Open Data Commons for African food markets.** Markets, economy, climate, demographics, agriculture, health, education, energy, water, transport, mining, governance, trade, labour, environment, poverty, ICT, finance, tourism, aid, gender and geospatial — one API, built entirely on open data, serving 45 African countries.
 
 > 🔴 **Live API: [sokodata.onrender.com](https://sokodata.onrender.com)** — interactive docs at [`/docs`](https://sokodata.onrender.com/docs)
 > 🖥️ **Live dashboard: [alfredshingai.github.io/SokoData](https://alfredshingai.github.io/SokoData/)** — browse markets & prices in your browser, no install
@@ -8,7 +8,7 @@
 [![CI](https://github.com/alfredshingai/sokodata/actions/workflows/ci.yml/badge.svg)](https://github.com/alfredshingai/sokodata/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-47%20passed-brightgreen)](#development)
+[![Tests](https://img.shields.io/badge/tests-59%20passed-brightgreen)](#development)
 [![DPG](https://img.shields.io/badge/Digital%20Public%20Good-compliant-blue)](https://digitalpublicgoods.net/standard/)
 
 ## Why
@@ -136,6 +136,7 @@ $ curl sokodata.onrender.com/v1/catalog
 | `GET /v1/geospatial/boundaries` | HDX COD-AB metadata |
 | `GET /v1/geospatial/markets/geojson` | 486 markets as GeoJSON |
 | `GET /health` | Dataset coverage + data provenance |
+| `GET /v1/coverage` | Per-country market-price coverage (what's actually loaded) |
 | `GET /v1/meta/freshness` | Per-table last update timestamp + row count |
 | `GET /v1/meta/freshness/summary` | Total rows, tables with data, oldest/newest dates |
 | `GET /v1/auth/me` | Current auth context (tier, rate limits) |
@@ -179,8 +180,11 @@ Interactive OpenAPI docs ship at `/docs` when the server runs.
 ```bash
 pip install -e ".[dev]"          # add [pdf] for stats office/regulator PDF extraction: pip install -e ".[dev,pdf]"
 
-# build the commons (all 22 datasets)
-python -m sokodata.etl_run
+# build the commons for one country (all datasets)
+python -m sokodata.etl_run --country ZW
+
+# market prices for every configured African country (45)
+python -m sokodata.etl_run --all-countries
 
 # or run one dataset at a time:
 python -m sokodata.datasets.markets.etl
@@ -237,9 +241,9 @@ The repo ships a [Render Blueprint](render.yaml) — one click deploys the API:
 
 1. Sign in at [render.com](https://render.com) with GitHub
 2. **New → Blueprint** → pick `alfredshingai/SokoData` → **Apply**
-3. Done — Render runs `python -m sokodata.etl_run` (rebuilds all datasets) and starts the API on every boot
+3. Done — Render runs `python -m sokodata.boot`, which serves the API immediately and rebuilds the warehouse from source data in the background on every boot
 
-Free-tier notes: the service sleeps after ~15 min without traffic (first request after that takes ~1 min while the warehouse rebuilds), and the disk is ephemeral — the SQLite file is rebuilt from source data each boot by design.
+Free-tier notes: the service sleeps after ~15 min without traffic (first request after that takes a few seconds — the API answers right away and data streams in as the background ETL finishes), and the disk is ephemeral — the SQLite file is rebuilt from source data each boot by design.
 
 ## Telegram alerts
 
@@ -334,7 +338,7 @@ Data: [World Food Programme Price Database via HDX](https://data.humdata.org/dat
 - [x] Aid (WDI + OECD scrape) + `/v1/aid/*`
 - [x] Gender (WDI + UN Women scrape) + `/v1/gender/*`
 - [x] Geospatial (HDX COD-AB + markets GeoJSON) + `/v1/geospatial/*`
-- [x] Unified catalog `GET /v1/catalog` (22 datasets) + unified ETL `python -m sokodata.etl_run`
+- [x] Unified catalog `GET /v1/catalog` (23 datasets) + unified ETL `python -m sokodata.etl_run`
 - [x] Telegram digest (channel push, GitHub Actions cron)
 - [x] WhatsApp bot (on-demand digest replies via Cloud API)
 - [x] Phase 1: Freshness endpoint `/v1/meta/freshness` + nightly GitHub Actions cron

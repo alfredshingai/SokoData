@@ -381,9 +381,7 @@ def get_country_config(country: str = DEFAULT_COUNTRY) -> dict:
         country = str(country)
     key = str(country).upper()
     if key not in COUNTRIES:
-        raise ValueError(
-            f"Unknown country {country!r}. Configured: {', '.join(sorted(COUNTRIES))}"
-        )
+        raise ValueError(f"Unknown country {country!r}. Configured: {', '.join(sorted(COUNTRIES))}")
     return COUNTRIES[key]
 
 

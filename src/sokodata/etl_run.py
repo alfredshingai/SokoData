@@ -21,10 +21,29 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 log = logging.getLogger(__name__)
 
 DATASETS = [
-    "markets", "economy", "climate", "demographics", "agriculture", "health",
-    "education", "energy", "water", "transport", "mining", "governance", "trade",
-    "labour", "environment", "poverty", "ict", "finance", "tourism", "aid",
-    "gender", "geospatial", "indicators",
+    "markets",
+    "economy",
+    "climate",
+    "demographics",
+    "agriculture",
+    "health",
+    "education",
+    "energy",
+    "water",
+    "transport",
+    "mining",
+    "governance",
+    "trade",
+    "labour",
+    "environment",
+    "poverty",
+    "ict",
+    "finance",
+    "tourism",
+    "aid",
+    "gender",
+    "geospatial",
+    "indicators",
 ]
 
 
