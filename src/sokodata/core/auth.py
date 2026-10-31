@@ -122,36 +122,39 @@ def verify_api_key(raw_key: str, db_path: Path | str | None = None) -> tuple[int
 
 # Simple in-memory rate limiter (per process)
 # For production, use Redis or similar
-_rate_limit_cache: dict[str, list[float]] = {}  # key_id -> [timestamps]
+_rate_limit_cache: dict[str, list[float]] = {}  # identity -> [timestamps]
+_RATE_LIMIT_MAX_IDENTITIES = 50_000  # guard against memory growth from IP churn
 
 
-def check_rate_limit(key_id: str | None, tier: int) -> bool:
-    """Check if request is within rate limits. Returns True if allowed."""
+def check_rate_limit(identity: str, tier: int) -> bool:
+    """Check if a request from *identity* is within rate limits.
+
+    Callers choose the identity: an API key id, or an "ip:<host>" string
+    for anonymous traffic.
+    """
     now = time.time()
     min_limit, day_limit = TIER_LIMITS.get(tier, TIER_LIMITS[0])
 
-    if key_id is None:
-        # Anonymous - use IP-based key (simplified)
-        cache_key = "anon"
-    else:
-        cache_key = key_id
+    if len(_rate_limit_cache) > _RATE_LIMIT_MAX_IDENTITIES:
+        for stale in list(_rate_limit_cache)[: _RATE_LIMIT_MAX_IDENTITIES // 5]:
+            _rate_limit_cache.pop(stale, None)
 
-    if cache_key not in _rate_limit_cache:
-        _rate_limit_cache[cache_key] = []
+    if identity not in _rate_limit_cache:
+        _rate_limit_cache[identity] = []
 
     # Clean old timestamps
     cutoff_min = now - 60
     cutoff_day = now - 86400
-    _rate_limit_cache[cache_key] = [ts for ts in _rate_limit_cache[cache_key] if ts > cutoff_day]
+    _rate_limit_cache[identity] = [ts for ts in _rate_limit_cache[identity] if ts > cutoff_day]
 
     # Check limits
-    recent_min = sum(1 for ts in _rate_limit_cache[cache_key] if ts > cutoff_min)
-    recent_day = len(_rate_limit_cache[cache_key])
+    recent_min = sum(1 for ts in _rate_limit_cache[identity] if ts > cutoff_min)
+    recent_day = len(_rate_limit_cache[identity])
 
     if recent_min >= min_limit or recent_day >= day_limit:
         return False
 
-    _rate_limit_cache[cache_key].append(now)
+    _rate_limit_cache[identity].append(now)
     return True
 
 
@@ -163,7 +166,7 @@ async def get_auth_context(
         verified = verify_api_key(api_key)
         if verified:
             tier, key_id = verified
-            if not check_rate_limit(key_id, tier):
+            if not check_rate_limit(f"key:{key_id}", tier):
                 raise HTTPException(status_code=429, detail="Rate limit exceeded")
             return AuthContext(
                 tier=tier,
@@ -174,8 +177,9 @@ async def get_auth_context(
         else:
             raise HTTPException(status_code=401, detail="Invalid API key")
 
-    # Anonymous
-    if not check_rate_limit(None, 0):
+    # Anonymous: rate limit per client IP, not one global bucket
+    client_ip = request.client.host if request.client else "unknown"
+    if not check_rate_limit(f"ip:{client_ip}", 0):
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
     return AuthContext(
         tier=0,
