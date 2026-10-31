@@ -13,7 +13,7 @@ on:
 jobs:
   etl:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,12 +28,19 @@ jobs:
         run: |
           pip install -e ".[pdf]"
 
-      - name: Run ETL for all countries
+      - name: Run markets ETL for all configured African countries
         env:
           SOKODATA_DATA_DIR: ${{ runner.temp }}/sokodata
         run: |
-          python -m sokodata.etl_run --country ZW
-          python -m sokodata.etl_run --country KE
+          python -m sokodata.etl_run --all-countries
+
+      - name: Run full commons ETL for primary countries
+        if: success() || failure()
+        env:
+          SOKODATA_DATA_DIR: ${{ runner.temp }}/sokodata
+        run: |
+          python -m sokodata.etl_run --country ZW --only economy,climate,demographics,agriculture,health,education,energy,water,transport,mining,governance,trade,labour,environment,poverty,ict,finance,tourism,aid,gender,geospatial,indicators
+          python -m sokodata.etl_run --country KE --only economy,climate,demographics,agriculture,health,education,energy,water,transport,mining,governance,trade,labour,environment,poverty,ict,finance,tourism,aid,gender,geospatial,indicators
 
       - name: Deploy to Render (trigger rebuild)
         if: github.ref == 'refs/heads/main'
