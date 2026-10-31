@@ -271,6 +271,7 @@ def join_datasets(
         logger.error(f"Join failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/correlate")
 def correlate_datasets(
     request: Request,
@@ -324,6 +325,7 @@ def correlate_datasets(
         logger.error(f"Correlation failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/summary")
 def join_summary(
     request: Request,
@@ -372,6 +374,7 @@ def join_summary(
     except Exception as e:
         logger.error(f"Join summary failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/anomalies")
 def detect_anomalies(
@@ -442,6 +445,7 @@ def detect_anomalies(
         logger.error(f"Anomaly detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.get("/anomalies/correlated")
 def correlated_anomalies(
     request: Request,
@@ -504,6 +508,7 @@ def correlated_anomalies(
     except Exception as e:
         logger.error(f"Correlated anomaly detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/anomalies/pattern")
 def anomaly_pattern(
@@ -575,6 +580,7 @@ def anomaly_pattern(
     except Exception as e:
         logger.error(f"Anomaly pattern detection failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/forecast")
 def forecast(
