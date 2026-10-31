@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from sokodata.config import DB_PATH, RAW_DIR
+from sokodata.config import DB_PATH, RAW_DIR, get_country_config
 from sokodata.datasets.markets.clean import clean_markets, clean_prices
 from sokodata.datasets.markets.fetch import fetch_raw
 from sokodata.datasets.markets.store import connect, load_tables
@@ -25,8 +25,9 @@ def run_etl(
     data_dir: Path, db_path: Path, *, skip_fetch: bool = False, country: str = "ZW"
 ) -> tuple[int, int]:
     if skip_fetch:
-        prices_path = data_dir / f"wfp_food_prices_{country.lower()}.csv"
-        markets_path = data_dir / f"wfp_markets_{country.lower()}.csv"
+        iso = get_country_config(country)["iso3"].lower()
+        prices_path = data_dir / f"wfp_food_prices_{iso}.csv"
+        markets_path = data_dir / f"wfp_markets_{iso}.csv"
         if not prices_path.exists() or not markets_path.exists():
             raise FileNotFoundError(f"raw files not found in {data_dir}; run without --skip-fetch")
     else:
