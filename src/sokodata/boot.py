@@ -20,12 +20,22 @@ log = logging.getLogger(__name__)
 
 
 def refresh_warehouse(app) -> tuple[int, dict[str, str]]:
-    """Run the full commons ETL, then point the app at the fresh data."""
-    ran, failures = run_selected(set(DATASETS), ["ZW"])
+    """Rebuild the warehouse, then point the app at the fresh data.
+
+    Market prices for every configured country come first (the core
+    product); the rest of the commons follows for the primary country.
+    """
+    from sokodata.config import COUNTRIES
+
+    ran, failures = run_selected({"markets"}, sorted(COUNTRIES))
+    rest = set(DATASETS) - {"markets"}
+    ran2, failures2 = run_selected(rest, ["ZW"])
+    ran += ran2
+    failures.update(failures2)
     if failures:
         log.warning("boot ETL summary: %d ok, %d FAILED: %s", ran, len(failures), failures)
     else:
-        log.info("boot ETL done: %d datasets, no failures", ran)
+        log.info("boot ETL done: %d runs, no failures", ran)
     try:
         app.state.prices = app.state.refresher()
         log.info("reloaded %d price rows into the running app", len(app.state.prices))
