@@ -14,21 +14,33 @@ import html
 import json
 import logging
 import os
+import time
 import urllib.request
 
 log = logging.getLogger(__name__)
 
 API_BASE = os.environ.get("SOKODATA_API_URL", "https://sokodata.onrender.com")
-REQUEST_TIMEOUT = 60
+REQUEST_TIMEOUT = 90
 MAX_MESSAGE = 4000  # Telegram allows 4096; leave headroom
 TOP_MOVERS = 4
 TOP_ANOMALIES = 3
 
 
-def fetch_json(url: str) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": "sokodata-alerts/0.1"})
-    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
-        return json.load(resp)
+def fetch_json(url: str, retries: int = 3, backoff: float = 15.0) -> dict:
+    """GET *url* with retries; tolerates a cold/asleep free-tier instance."""
+    last: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "sokodata-alerts/0.1"})
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
+                return json.load(resp)
+        except Exception as e:
+            last = e
+            log.warning("fetch %s failed (attempt %d/%d): %s", url, attempt, retries, e)
+            if attempt < retries:
+                time.sleep(backoff * attempt)
+    assert last is not None
+    raise last
 
 
 def _markup(markup: str):
@@ -123,9 +135,11 @@ def run() -> int:
         log.warning("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set; skipping digest")
         return 0
 
+    # /health first: it also wakes a sleeping free-tier instance before the
+    # heavier insight queries.
+    coverage = fetch_json(f"{API_BASE}/health")["coverage"]
     movers = fetch_json(f"{API_BASE}/v1/insights/movers?window_days=90&limit=10")
     anomalies = fetch_json(f"{API_BASE}/v1/insights/anomalies?limit=5")
-    coverage = fetch_json(f"{API_BASE}/health")["coverage"]
     message = format_digest(movers, anomalies, coverage.get("last_date"))
 
     send_message(token, chat_id, message)
