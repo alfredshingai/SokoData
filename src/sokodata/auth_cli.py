@@ -60,7 +60,8 @@ def main() -> int:
             for r in rows:
                 state = "active" if r["enabled"] else "disabled"
                 print(
-                    f"{r['id']}  tier={r['tier']}  {state:<8}  {r['name']!r}  created={r['created_at']}"
+                    f"{r['id']}  tier={r['tier']}  {state:<8}  {r['name']!r}"
+                    f"  created={r['created_at']}"
                 )
             return 0
 
