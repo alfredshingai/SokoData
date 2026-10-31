@@ -185,8 +185,8 @@ async function initExplorer() {
   dsSel.innerHTML = '<option value="markets">markets — Food Market Prices</option>' + genericDatasets.map(d => `<option value="${d.id}">${d.id} — ${d.label}</option>`).join("");
   dsSel.addEventListener("change", onDatasetChange);
   el("explore-endpoint").addEventListener("change", loadGeneric);
-  // Populate markets first so default tab has data even if generic fails.
-  try { await populateSelectors(); } catch (err) { console.error("markets explorer failed", err); }
+  // Populate countries + markets first so default tab has data even if generic fails.
+  try { await initCountrySelect(); await populateSelectors(); } catch (err) { console.error("markets explorer failed", err); }
   await onDatasetChange();
 }
 
@@ -289,23 +289,57 @@ function renderGenericChart(rows) {
   });
 }
 
-// explorer — markets (unchanged but now nested)
+// explorer — markets
+let selectorsWired = false;
+
 async function populateSelectors() {
+  const countryCode = el("country-select").value || "";
   const [commodities, markets] = await Promise.all([
     fetchJSON("/v1/commodities?limit=500"),
-    fetchJSON("/v1/markets?limit=500"),
+    fetchJSON(`/v1/markets?limit=500${countryCode ? `&country=${encodeURIComponent(countryCode)}` : ""}`),
   ]);
   const cSel = el("commodity-select");
   cSel.innerHTML = commodities.map((c) => `<option value="${c.commodity_id}">${c.commodity} (${c.unit})</option>`).join("");
   const mSel = el("market-select");
-  mSel.innerHTML = markets.map((m) => `<option value="${m.market_id}">${m.market} — ${m.admin1 || ""}</option>`).join("");
+  if (!markets.length) {
+    mSel.innerHTML = '<option value="">No markets loaded for this country yet</option>';
+  } else {
+    mSel.innerHTML = markets.map((m) => `<option value="${m.market_id}">${m.market} — ${m.admin1 || ""}</option>`).join("");
+  }
   const byCoverage = [...commodities].sort((a, b) => b.observations - a.observations);
   if (byCoverage[0]) cSel.value = byCoverage[0].commodity_id;
   const mbare = markets.find((m) => m.market === "Mbare") || markets[0];
   if (mbare) mSel.value = mbare.market_id;
-  cSel.addEventListener("change", loadExplorer);
-  mSel.addEventListener("change", loadExplorer);
-  await loadExplorer();
+  if (!selectorsWired) {
+    cSel.addEventListener("change", loadExplorer);
+    mSel.addEventListener("change", loadExplorer);
+    selectorsWired = true;
+  }
+}
+
+async function initCountrySelect() {
+  const sel = el("country-select");
+  let countries = [];
+  try {
+    const coverage = await fetchJSON("/v1/coverage");
+    countries = coverage.countries || [];
+  } catch (err) {
+    console.error("coverage failed, defaulting to Zimbabwe", err);
+  }
+  if (!countries.length) countries = [{ country: "ZWE" }];
+  sel.innerHTML = countries
+    .map((c) => `<option value="${c.country}">${c.country}${c.markets ? ` — ${c.markets} markets` : ""}</option>`)
+    .join("");
+  const zwe = countries.find((c) => c.country === "ZWE");
+  if (zwe) sel.value = "ZWE";
+  sel.addEventListener("change", async () => {
+    try {
+      await populateSelectors();
+    } catch (err) {
+      console.error(err);
+      showError();
+    }
+  });
 }
 
 async function loadExplorer() {
@@ -348,7 +382,10 @@ function drawChart(series, marketLabel, commodityLabel) {
 }
 
 async function renderLatestTable(commodityId) {
-  const rows = await fetchJSON(`/v1/prices/latest?commodity_id=${commodityId}&limit=2000`);
+  const countryCode = el("country-select").value || "";
+  const rows = await fetchJSON(
+    `/v1/prices/latest?commodity_id=${commodityId}&limit=2000${countryCode ? `&country=${encodeURIComponent(countryCode)}` : ""}`
+  );
   const priced = rows.filter((r) => r.usdprice !== null).sort((a, b) => a.usdprice - b.usdprice);
   if (!priced.length) {
     el("latest-table").querySelector("tbody").innerHTML = '<tr><td colspan="6" class="muted">No USD-normalized prices available.</td></tr>';
