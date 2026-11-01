@@ -128,7 +128,12 @@ def main() -> int:
         action="store_true",
         help="run the markets ETL for every configured country",
     )
-    parser.add_argument("--only", action="append", choices=DATASETS, default=None)
+    parser.add_argument(
+        "--only",
+        action="append",
+        default=None,
+        help=f"dataset(s) to run, comma-separated or repeated; one of: {', '.join(DATASETS)}",
+    )
     parser.add_argument(
         "--skip-fetch", action="store_true", help="reuse already-downloaded files for markets"
     )
@@ -140,6 +145,13 @@ def main() -> int:
         help="exit non-zero if any dataset fails (default: only markets failures are fatal)",
     )
     args = parser.parse_args()
+
+    if args.only:
+        only_values = [v.strip() for chunk in args.only for v in chunk.split(",") if v.strip()]
+        bad = [v for v in only_values if v not in DATASETS]
+        if bad:
+            parser.error(f"unknown dataset(s): {', '.join(bad)}")
+        args.only = only_values
 
     if args.all_countries:
         countries = sorted(COUNTRIES)

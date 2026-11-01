@@ -44,8 +44,16 @@ jobs:
 
       - name: Deploy to Render (trigger rebuild)
         if: github.ref == 'refs/heads/main'
-        run: |
-          curl -X POST "https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_DEPLOY_KEY }}"
         env:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
           RENDER_DEPLOY_KEY: ${{ secrets.RENDER_DEPLOY_KEY }}
+        run: |
+          if [ -z "$RENDER_SERVICE_ID" ] || [ -z "$RENDER_DEPLOY_KEY" ]; then
+            echo "::error::RENDER_SERVICE_ID / RENDER_DEPLOY_KEY secrets are not set."
+            echo "The deploy hook never fires without them, so the live site keeps"
+            echo "running old code. Set them in repo Settings → Secrets → Actions:"
+            echo "  RENDER_SERVICE_ID  = the srv-… id of the Render service"
+            echo "  RENDER_DEPLOY_KEY  = from Render → service → Settings → Deploy Hooks"
+            exit 1
+          fi
+          curl -fsS -X POST "https://api.render.com/deploy/srv-${RENDER_SERVICE_ID}?key=${RENDER_DEPLOY_KEY}"

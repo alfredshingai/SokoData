@@ -5,6 +5,7 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from sokodata.config import DB_PATH
 from sokodata.core.auth import (
     AuthContext,
     create_api_key,
@@ -43,7 +44,7 @@ def create_key(
     ctx: AuthContext = Depends(require_tier(2)),  # Only premium can create keys
 ):
     """Create a new API key. Requires premium tier."""
-    db_path = "data/sokodata.db"
+    db_path = str(DB_PATH)
     init_auth_db(db_path)
     key_id, raw_key = create_api_key(name=req.name, tier=req.tier, db_path=db_path)
     return CreateKeyResponse(key_id=key_id, key=raw_key, name=req.name, tier=req.tier)
@@ -52,7 +53,7 @@ def create_key(
 @router.get("/keys", response_model=list[KeyInfo])
 def list_keys(ctx: AuthContext = Depends(require_tier(2))):
     """List all API keys. Requires premium tier."""
-    db_path = "data/sokodata.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
@@ -68,7 +69,7 @@ def list_keys(ctx: AuthContext = Depends(require_tier(2))):
 @router.delete("/keys/{key_id}")
 def revoke_key(key_id: str, ctx: AuthContext = Depends(require_tier(2))):
     """Revoke an API key. Requires premium tier."""
-    db_path = "data/sokodata.db"
+    db_path = str(DB_PATH)
     conn = sqlite3.connect(db_path)
     try:
         conn.execute("UPDATE api_keys SET enabled=0 WHERE id=?", (key_id,))

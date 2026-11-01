@@ -8,8 +8,6 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
-from sokodata.datasets.markets.store import connect
-
 router = APIRouter(tags=["export"], prefix="/export")
 
 logger = logging.getLogger(__name__)
@@ -309,13 +307,11 @@ async def export_dataset(
     if dataset_id not in DATASET_TABLES:
         raise HTTPException(status_code=404, detail=f"Dataset {dataset_id} not found")
 
-    # Build and execute query
-    conn = connect("data/sokodata.db")
-    try:
-        sql, params = _build_query(conn, dataset_id, request, country, start, end, limit, offset)
-        df = pd.read_sql(sql, conn, params=params)
-    finally:
-        conn.close()
+    # The app's shared read-only connection already points at the
+    # configured warehouse (SOKODATA_DATA_DIR-aware), not a hardcoded path.
+    conn = request.app.state.conn
+    sql, params = _build_query(conn, dataset_id, request, country, start, end, limit, offset)
+    df = pd.read_sql(sql, conn, params=params)
 
     if df.empty:
         raise HTTPException(status_code=404, detail="No data found for the given filters")
