@@ -8,6 +8,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from sokodata.alerts import whatsapp
+from sokodata.config import DB_PATH
 from sokodata.core.auth import get_auth_context
 from sokodata.core.webhooks import (
     WebhookSubscription,
@@ -80,10 +81,10 @@ def create_webhook(
     ctx=Depends(get_auth_context),
 ):
     """Create a new webhook subscription."""
-    db_path = "data/sokodata.db"
+    db_path = str(DB_PATH)
     init_webhook_db(db_path)
     webhook_id = create_webhook_subscription(
-        "data/sokodata.db",
+        str(DB_PATH),
         "anonymous",
         req.get("channel"),
         req.get("target"),
@@ -96,14 +97,14 @@ def create_webhook(
 @router.get("", response_model=list[dict])
 def list_webhooks(ctx=Depends(get_auth_context)):
     """List all webhook subscriptions for the current user."""
-    subs = list_webhook_subscriptions("data/sokodata.db", ctx.key_id or "anonymous")
+    subs = list_webhook_subscriptions(str(DB_PATH), ctx.key_id or "anonymous")
     return subs
 
 
 @router.delete("/{webhook_id}")
 def delete_webhook(webhook_id: str, ctx=Depends(get_auth_context)):
     """Delete a webhook subscription."""
-    ok = delete_webhook_subscription("data/sokodata.db", webhook_id, ctx.key_id or "anonymous")
+    ok = delete_webhook_subscription(str(DB_PATH), webhook_id, ctx.key_id or "anonymous")
     if not ok:
         raise HTTPException(status_code=404, detail="Webhook not found")
     return {"ok": True}

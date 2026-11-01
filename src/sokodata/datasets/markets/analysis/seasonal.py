@@ -12,9 +12,10 @@ and official rates at observation time).
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
+
+# scikit-learn is an optional extra (pip install "sokodata[ml]"); the
+# statistical endpoints here must import without it, so model classes are
+# imported inside the ML helpers that use them.
 
 # Aggregated rows are market-level aggregates published by WFP; use them for
 # analytics when present, falling back to actual rows. Keep both otherwise.
@@ -268,8 +269,12 @@ def prepare_ml_features(
 def train_ml_model(X: pd.DataFrame, y: pd.Series, model_type: str = "rf", **kwargs):
     """Train ML model for forecasting."""
     if model_type == "rf":
+        from sklearn.ensemble import RandomForestRegressor
+
         model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1, **kwargs)
     elif model_type == "lr":
+        from sklearn.linear_model import LinearRegression
+
         model = LinearRegression(**kwargs)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
@@ -277,6 +282,8 @@ def train_ml_model(X: pd.DataFrame, y: pd.Series, model_type: str = "rf", **kwar
     # Scale features for linear regression
     scaler = None
     if model_type == "lr":
+        from sklearn.preprocessing import StandardScaler
+
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
         model.fit(X_scaled, y)
